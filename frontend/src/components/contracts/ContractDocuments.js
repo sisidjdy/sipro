@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { formatDateTimeWIB } from "@/utils/formatters";
 import api from "@/services/apiClient";
 import { P53 } from "@/constants/testIds";
+import SprComparePanel from "@/components/finance/SprComparePanel";
 
 /**
  * ContractDocuments — terbitkan & CETAK dokumen asli owner (SPR 3 varian + SPKT).
@@ -120,7 +121,15 @@ export default function ContractDocuments({ contract, onChanged }) {
             <div key={d.id} data-testid={P53.docRow} data-doc={d.template_code}
               className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-background p-3">
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{d.title}</p>
+                <p className="truncate text-sm font-medium">
+                  {d.title}
+                  {d.template_code === "ADENDUM_SPR" ? (
+                    <span data-testid="contract-doc-addendum-badge"
+                      className="ml-1.5 rounded-full bg-indigo-50 px-1.5 text-[10px] font-normal text-indigo-800">
+                      adendum otomatis · mengubah {d.parent_doc_number}
+                    </span>
+                  ) : null}
+                </p>
                 <p className="font-mono text-xs text-muted-foreground">{d.doc_number}</p>
                 <p className="text-[11px] text-muted-foreground">
                   Dibuat {formatDateTimeWIB(d.created_at)}
@@ -141,6 +150,11 @@ export default function ContractDocuments({ contract, onChanged }) {
         <EmptyState icon={FileText} title="Belum ada dokumen diterbitkan"
           description="Terbitkan SPR sesuai skema kontrak; SPKT muncul bila ada kelebihan tanah." />
       )}
+
+      <div data-testid="contract-spr-compare" className="rounded-lg border border-dashed p-3">
+        <SprComparePanel url={`/contracts/${contract.id}/spr-compare`} refreshKey={docs.length}
+          compact title="Cek sebelum minta tanda tangan — SPR vs Tagihan Finance" />
+      </div>
     </section>
   );
 }

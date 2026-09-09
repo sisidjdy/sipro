@@ -252,6 +252,15 @@ async def available_documents(contract_id: str,
             "recommended_code": ce.SCHEME_DOC.get(c.get("scheme"))}
 
 
+@router.get("/contracts/{contract_id}/spr-compare")
+async def contract_spr_compare(contract_id: str,
+                               user: dict = Depends(require_permission("documents", "view"))):
+    """SPR vs tagihan Finance untuk kontrak ini — Sales melihatnya SEBELUM meminta tanda tangan."""
+    import spr_compare
+    c = await _contract_scoped(contract_id, user)
+    return {"data": serialize_doc(await spr_compare.compare(_org(user), c["deal_id"]))}
+
+
 @router.post("/contracts/{contract_id}/documents")
 async def generate_document(contract_id: str, payload: DocGenerateIn,
                             user: dict = Depends(require_permission("documents", "create"))):

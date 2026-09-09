@@ -1,0 +1,24 @@
+{
+  "summary": "Iteration 22 — 'Perbandingan Di Kontrak' + 'Adendum Otomatis'. Backend: pytest /app/backend/tests/test_iter21_spr_compare.py → 7/7 PASSED (11.25s) termasuk test_addendum_auto_after_signed_spr (adendum draft ADENDUM_SPR lahir setelah swap skema pada SPR ter-tandatangani, idempoten pada swap berulang, PDF %PDF, dapat difinalisasi + ditandatangani; compare kontrak berpindah ke adendum dengan document.is_addendum=true dan parent_doc_number=SPR#) dan test_addendum_draft_removed_when_numbers_revert (swap kembali ke skema yang ditandatangani → draft dibatalkan otomatis, tersisa 1 signed). Gate: verify_payment_schemes.py → 'GATE 48 HIJAU — 65 pemeriksaan'; verify_business_invariants.py → 'INVARIAN BISNIS LULUS (0 peringatan)'. Backend manual: GET /api/contracts/{cid}/spr-compare untuk kontrak demo A-01 sebagai superadmin & sales → 200; state='belum_terbit', verdict menyebut 'SPR generik lama ada pada deal ini; bukan pembanding — terbitkan SPR resmi dari kontrak.', legacy_spr_count=1, rows=15. UI sales@sipro.co.id di /documents?hub=terbitkan: [data-testid=issue-hub-contract-select] memilih 'Ibu Dewi Kartika — Unit A-01 — KPR' → panel dokumen kontrak memuat [data-testid=contract-spr-compare] berisi [data-testid=spr-compare-panel][data-state=belum_terbit] dengan judul 'Cek sebelum minta tanda tangan — SPR vs Tagihan Finance' terverifikasi, [data-testid=spr-compare-verdict] tampil, mode compact 0 baris (tidak ada mismatch pada snapshot), [data-testid=spr-compare-toggle] 'Lihat semua 15 baris perbandingan' membuka [data-testid=spr-compare-row] × 15 (angka: Harga bersih Rp850jt SPR=Finance ✓, Booking fee Rp5jt ✓, term 1..4). UI finance@sipro.co.id regresi iter21: /finance › Piutang › klik ar-detail-button pada B-01 → sheet Detail Piutang memuat [data-testid=spr-compare-panel][data-state=belum_terbit] (kontrak demo tanpa SPR resmi). Tidak ada dokumen/kontrak demo (A-01, A-06, B-01) yang diubah/ditandatangani. contract-doc-addendum-badge tidak diuji di UI langsung karena adendum diperlukan pada dokumen non-demo — sudah tercover oleh pytest.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iter21_spr_compare.py",
+    "/app/test_reports/pytest/iter22.xml",
+    "/app/scripts/verify_payment_schemes.py",
+    "/app/scripts/verify_business_invariants.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Adendum ADENDUM_SPR menghapus draft otomatis saat angka kembali sama dengan dokumen ditandatangani — pastikan alur ini terekam di audit trail (system-generated cancellation) agar Finance tidak bingung mengapa draft menghilang.",
+    "SprComparePanel compact mode menampilkan 0 baris ketika semua match — pertimbangkan pesan singkat 'Semua baris cocok — buka detail bila perlu' agar Sales tidak mengira panel kosong."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "superadmin@sipro.co.id, owner@sipro.co.id, finance@sipro.co.id, sales@sipro.co.id — semua password Sipro#2026 (/app/memory/test_credentials.md).",
+  "seed_data_creation": "Pytest fixture module-scope membuat 1 lead + 1 deal + 1 kontrak transien + 3 payment_schemes uji (sch/sch2/sch3) per run, semuanya dihapus di teardown (DELETE deal+lead force+reason, db.payment_schemes.delete_one). Invarian bisnis re-checked green setelah run.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter22 hijau penuh. Cmd: cd /app/backend && python -m pytest tests/test_iter21_spr_compare.py -q (7 tests, ~11s). Endpoint baru: GET /api/contracts/{cid}/spr-compare (sales boleh untuk kontrak assigned). Adendum otomatis: swap skema kontrak setelah SPR ditandatangani (POST /api/payment-schemes/contracts/{cid} atau POST /api/finance/ar/{deal}/schedule) → dokumen ADENDUM_SPR draft dengan diff_rows, parent_doc_number, amounts_snapshot; idempoten (satu draft per kontrak, diperbarui bukan kembar); auto-remove saat angka revert ke dokumen signed; is_addendum=true dipakai compare. UI selectors utama: issue-hub-contract-select, contract-spr-compare, spr-compare-panel[data-state], spr-compare-verdict, spr-compare-toggle, spr-compare-row, spr-compare-doc, contract-doc-addendum-badge (hanya muncul saat kontrak punya adendum).",
+  "rca of the issue": "N/A — tidak ada defect terdeteksi; semua uji iteration 22 hijau (backend + UI smoke)."
+}

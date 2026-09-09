@@ -26,32 +26,38 @@ function Cell({ row, side }) {
   );
 }
 
-/** SPR vs Tagihan Finance — baris per baris, dibaca SEBELUM SPR ditandatangani. */
-export default function SprComparePanel({ dealId, refreshKey }) {
+/** SPR vs Tagihan Finance — baris per baris, dibaca SEBELUM SPR ditandatangani.
+ *  `url` bisa dialihkan ke `/contracts/{id}/spr-compare` (Sales tanpa akses Finance);
+ *  `compact` hanya menampilkan verdict + baris yang BEDA (tabel penuh bisa dibuka). */
+export default function SprComparePanel({ dealId, url, refreshKey, compact = false, title = "SPR vs Tagihan Finance" }) {
   const [cmp, setCmp] = useState(null);
   const [state, setState] = useState("loading");
+  const [showAll, setShowAll] = useState(false);
+  const endpoint = url || (dealId ? `/finance/ar/${dealId}/spr-compare` : null);
 
   useEffect(() => {
-    if (!dealId) return undefined;
+    if (!endpoint) return undefined;
     let hidup = true;
     setState("loading");
-    api.get(`/finance/ar/${dealId}/spr-compare`)
+    api.get(endpoint)
       .then((res) => { if (hidup) { setCmp(res.data.data); setState("ok"); } })
       .catch(() => { if (hidup) setState("gagal"); });
     return () => { hidup = false; };
-  }, [dealId, refreshKey]);
+  }, [endpoint, refreshKey]);
 
   if (state === "loading") return <LoadingCards count={1} />;
   if (state === "gagal" || !cmp) return <p className="text-xs text-muted-foreground">Perbandingan SPR tidak bisa dimuat.</p>;
 
   const doc = cmp.document;
   const Icon = cmp.all_match ? CheckCircle2 : cmp.state === "cocok" ? CheckCircle2 : cmp.rows.length ? AlertTriangle : FileSearch;
+  const visibleRows = compact && !showAll ? cmp.rows.filter((r) => !r.match) : cmp.rows;
   return (
     <section data-testid="spr-compare-panel" data-state={cmp.state} className="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h4 className="font-heading text-sm font-semibold">SPR vs Tagihan Finance</h4>
+        <h4 className="font-heading text-sm font-semibold">{title}</h4>
         {doc ? (
           <span data-testid="spr-compare-doc" className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            {doc.is_addendum ? <span className="rounded-full bg-indigo-50 px-1.5 text-[10px] text-indigo-800">Adendum dari {doc.parent_doc_number}</span> : null}
             <span className="font-mono">{doc.doc_number}</span>
             <StatusPill status={doc.status} group="document_status" />
           </span>
@@ -72,7 +78,7 @@ export default function SprComparePanel({ dealId, refreshKey }) {
           {cmp.older_documents ? <p className="mt-0.5 opacity-80">{cmp.older_documents} SPR lebih lama diabaikan (hanya yang terbaru dibandingkan).</p> : null}
         </div>
       </div>
-      {cmp.rows.length ? (
+      {cmp.rows.length && (visibleRows.length || !compact) ? (
         <div className="overflow-hidden rounded-lg border bg-card shadow-[var(--shadow-card)]">
           <table className="w-full text-xs">
             <thead className="bg-muted/60 text-[10px] uppercase tracking-wide text-muted-foreground">
@@ -84,7 +90,7 @@ export default function SprComparePanel({ dealId, refreshKey }) {
               </tr>
             </thead>
             <tbody>
-              {cmp.rows.map((r) => (
+              {visibleRows.map((r) => (
                 <tr key={r.key} data-testid="spr-compare-row" data-key={r.key} data-match={r.match ? "1" : "0"}
                   className={`border-t ${r.match ? "" : "bg-rose-50/70"} ${/^(terms_total|total_bill|costs_total)$/.test(r.key) ? "font-semibold" : ""}`}>
                   <td className="px-2.5 py-1.5">
@@ -103,6 +109,12 @@ export default function SprComparePanel({ dealId, refreshKey }) {
             </tbody>
           </table>
         </div>
+      ) : null}
+      {compact && cmp.rows.length ? (
+        <button type="button" data-testid="spr-compare-toggle" onClick={() => setShowAll((v) => !v)}
+          className="text-[11px] font-medium text-primary underline-offset-2 hover:underline">
+          {showAll ? "Sembunyikan tabel lengkap" : `Lihat semua ${cmp.rows.length} baris perbandingan`}
+        </button>
       ) : null}
     </section>
   );

@@ -50,6 +50,7 @@ TARGETS = {
     "PPJB": ("Perjanjian Pengikatan Jual Beli (PPJB)", "letter"),
     "AJB": ("Akta Jual Beli (AJB)", "letter"),
     "SPKT": ("Surat Pernyataan Kelebihan Tanah", "letter"),
+    "ADENDUM_SPR": ("Adendum SPR — Perubahan Skema Pembayaran", "letter"),
     "BAP": ("Berita Acara Pembatalan & Refund", "letter"),
     "BAST": ("Berita Acara Serah Terima unit", "letter"),
     "KWITANSI": ("Kwitansi penerimaan pembayaran", "letter"),

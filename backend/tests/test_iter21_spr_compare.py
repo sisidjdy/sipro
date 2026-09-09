@@ -138,6 +138,80 @@ def test_scheme_change_makes_mismatch_and_blocks_sign(ctx):
     assert r.status_code == 200, r.text
 
 
+def test_addendum_auto_after_signed_spr(ctx):
+    """SPR sudah ditandatangani → skema diganti → adendum otomatis (draft) dengan tabel selisih."""
+    sa, fin, deal, cid = ctx["sa"], ctx["fin"], ctx["deal"], ctx["cid"]
+    finlead = _login("owner@sipro.co.id")
+    cmp0 = _j(requests.get(f"{BASE}/contracts/{cid}/spr-compare", headers=sa, timeout=30))["data"]
+    assert cmp0["state"] == "cocok" and cmp0["signed"] is True
+    sch = _j(requests.post(f"{BASE}/payment-schemes", headers=sa, json={
+        "name": f"IT21 adendum {ctx['tanda']}", "kind": "cash_bertahap", "terms": [
+            {"label": "DP 50%", "basis": "percent", "value": 50},
+            {"label": "Pelunasan", "basis": "remaining", "value": 0}]}, timeout=30))["data"]
+    ctx["sch2"] = sch
+    r = requests.post(f"{BASE}/payment-schemes/contracts/{cid}", headers=finlead,
+                      json={"scheme_id": sch["id"], "reason": "uji adendum otomatis iteration 21"}, timeout=60)
+    assert r.status_code == 200, r.text
+    docs = _j(requests.get(f"{BASE}/documents", headers=sa, params={"limit": 100}, timeout=30))["data"]
+    add = [d for d in docs if d.get("template_code") == "ADENDUM_SPR" and d.get("deal_id") == deal["id"]]
+    assert len(add) == 1, "tepat satu adendum lahir"
+    a = _j(requests.get(f"{BASE}/documents/{add[0]['id']}", headers=sa, timeout=30))["data"]
+    assert a["status"] == "draft" and a["parent_doc_number"] and a["diff_rows"]
+    assert "→" in a["content"] and "Skema pembayaran baru" in a["content"]
+    assert any(r["key"] == "terms_count" for r in a["diff_rows"])
+    # compare (jalur kontrak, Sales) kini memakai adendum sebagai dokumen berlaku → cocok
+    cmp = _j(requests.get(f"{BASE}/contracts/{cid}/spr-compare", headers=sa, timeout=30))["data"]
+    assert cmp["state"] == "cocok" and cmp["document"]["is_addendum"] is True
+    assert cmp["document"]["parent_doc_number"] == a["parent_doc_number"]
+    # idempoten: ganti ke skema LAIN lagi → adendum draft yang sama diperbarui, bukan kembar
+    sch3 = _j(requests.post(f"{BASE}/payment-schemes", headers=sa, json={
+        "name": f"IT21 adendum2 {ctx['tanda']}", "kind": "cash_bertahap", "terms": [
+            {"label": "DP 20%", "basis": "percent", "value": 20},
+            {"label": "Cicilan", "basis": "percent", "value": 30},
+            {"label": "Cicilan 2", "basis": "percent", "value": 30},
+            {"label": "Pelunasan", "basis": "remaining", "value": 0}]}, timeout=30))["data"]
+    ctx["sch3"] = sch3
+    r = requests.post(f"{BASE}/payment-schemes/contracts/{cid}", headers=finlead,
+                      json={"scheme_id": sch3["id"], "reason": "uji adendum kedua iteration 21"}, timeout=60)
+    assert r.status_code == 200, r.text
+    docs = _j(requests.get(f"{BASE}/documents", headers=sa, params={"limit": 100}, timeout=30))["data"]
+    add2 = [d for d in docs if d.get("template_code") == "ADENDUM_SPR" and d.get("deal_id") == deal["id"]]
+    assert len(add2) == 1 and add2[0]["id"] == add[0]["id"]
+    a2 = _j(requests.get(f"{BASE}/documents/{add[0]['id']}", headers=sa, timeout=30))["data"]
+    assert len(a2["amounts_snapshot"]["terms"]) == 4, "snapshot adendum mengikuti skema terbaru"
+    # PDF adendum bisa dibuka
+    pdf = requests.get(f"{BASE}/documents/{add[0]['id']}/pdf", headers=sa, timeout=60)
+    assert pdf.status_code == 200 and pdf.content[:4] == b"%PDF"
+    # adendum bisa difinalisasi & ditandatangani (angkanya = Finance)
+    requests.post(f"{BASE}/documents/{add[0]['id']}/finalize", headers=sa, timeout=30)
+    r = requests.post(f"{BASE}/documents/{add[0]['id']}/sign", headers=sa,
+                      json={"role": "buyer", "name": "Uji"}, timeout=30)
+    assert r.status_code == 200, r.text
+
+
+def test_addendum_draft_removed_when_numbers_revert(ctx):
+    """Skema kembali ke skema SPR/adendum yang ditandatangani → adendum draft baru tidak tersisa."""
+    sa, deal, cid = ctx["sa"], ctx["deal"], ctx["cid"]
+    finlead = _login("owner@sipro.co.id")
+    # ganti ke skema lain → adendum draft #2 lahir (adendum #1 sudah ditandatangani)
+    r = requests.post(f"{BASE}/payment-schemes/contracts/{cid}", headers=finlead,
+                      json={"scheme_id": ctx["sch2"]["id"], "reason": "uji adendum revert iteration 21"}, timeout=60)
+    assert r.status_code == 200, r.text
+    docs = _j(requests.get(f"{BASE}/documents", headers=sa, params={"limit": 100}, timeout=30))["data"]
+    adds = [d for d in docs if d.get("template_code") == "ADENDUM_SPR" and d.get("deal_id") == deal["id"]]
+    assert len(adds) == 2 and sum(1 for d in adds if d["status"] == "draft") == 1
+    # kembali ke skema adendum #1 yang ditandatangani → draft #2 dibatalkan otomatis
+    r = requests.post(f"{BASE}/payment-schemes/contracts/{cid}", headers=finlead,
+                      json={"scheme_id": ctx["sch3"]["id"], "reason": "uji adendum revert kembali"}, timeout=60)
+    assert r.status_code == 200, r.text
+    docs = _j(requests.get(f"{BASE}/documents", headers=sa, params={"limit": 100}, timeout=30))["data"]
+    adds = [d for d in docs if d.get("template_code") == "ADENDUM_SPR" and d.get("deal_id") == deal["id"]]
+    assert len(adds) == 1 and adds[0]["status"] == "signed"
+    cmp = _j(requests.get(f"{BASE}/contracts/{cid}/spr-compare", headers=sa, timeout=30))["data"]
+    assert cmp["state"] == "cocok" and cmp["document"]["is_addendum"] is True
+
+
 def test_cleanup_scheme(ctx):
-    if ctx.get("sch"):
-        ctx["db"].payment_schemes.delete_one({"id": ctx["sch"]["id"]})
+    for k in ("sch", "sch2", "sch3"):
+        if ctx.get(k):
+            ctx["db"].payment_schemes.delete_one({"id": ctx[k]["id"]})

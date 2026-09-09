@@ -167,7 +167,11 @@ async def create_schedule(deal_id: str, payload: ArScheduleCreate,
                                           replace=True, actor=user.get("email"))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    return {"data": serialize_doc(inv)}
+    # Skema/angka berubah setelah SPR ditandatangani → adendum otomatis (tidak menimpa SPR).
+    import spr_compare
+    adendum = await spr_compare.ensure_addendum(org, deal_id, user.get("email"),
+                                                "skema pembayaran diganti oleh Finance")
+    return {"data": serialize_doc(inv), "addendum": serialize_doc(adendum)}
 
 
 @router.post("/receipts")

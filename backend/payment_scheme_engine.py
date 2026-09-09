@@ -360,4 +360,7 @@ async def set_for_contract(org: str, contract: dict, scheme_id: str, actor: str,
         if inv:
             await fin.create_ar_for_deal({**deal, "scheme_id": scheme_id}, scheme_id=scheme_id,
                                          org_id=org, replace=True, actor=actor)
+            # SPR yang sudah ditandatangani tidak ditimpa → adendum otomatis (tabel lama → baru).
+            import spr_compare
+            await spr_compare.ensure_addendum(org, deal_id, actor, reason)
     return await db.contracts.find_one({"id": contract["id"]}, {"_id": 0})
