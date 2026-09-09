@@ -1,0 +1,1096 @@
+{
+ "leads": {
+  "sales_manager": [
+   "view_all",
+   "create",
+   "update",
+   "assign",
+   "delete"
+  ],
+  "marketing_admin": [
+   "view_all",
+   "create",
+   "update",
+   "assign"
+  ],
+  "sales": [
+   "view_own",
+   "create",
+   "update"
+  ],
+  "finance": [
+   "view_all"
+  ]
+ },
+ "deals": {
+  "sales_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "marketing_admin": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "sales": [
+   "view_own",
+   "create",
+   "update"
+  ],
+  "finance": [
+   "view_all"
+  ]
+ },
+ "reservations": {
+  "sales_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "marketing_admin": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "sales": [
+   "view_own",
+   "create",
+   "update"
+  ],
+  "finance": [
+   "view_all"
+  ]
+ },
+ "documents": {
+  "sales_manager": [
+   "view_all",
+   "create",
+   "update",
+   "sign",
+   "verify"
+  ],
+  "marketing_admin": [
+   "view_all",
+   "create",
+   "update",
+   "manage",
+   "verify"
+  ],
+  "sales": [
+   "view_own",
+   "create",
+   "update",
+   "sign"
+  ],
+  "finance": [
+   "view_all",
+   "verify"
+  ]
+ },
+ "projects": {
+  "sales_manager": [
+   "view_all"
+  ],
+  "marketing_admin": [
+   "view_all"
+  ],
+  "sales": [
+   "view_all"
+  ],
+  "finance": [
+   "view_all"
+  ],
+  "project_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "site_engineer": [
+   "view_all"
+  ]
+ },
+ "units": {
+  "sales_manager": [
+   "view_all"
+  ],
+  "marketing_admin": [
+   "view_all"
+  ],
+  "sales": [
+   "view_all"
+  ],
+  "finance": [
+   "view_all"
+  ],
+  "project_manager": [
+   "view_all",
+   "update"
+  ],
+  "site_engineer": [
+   "view_all"
+  ]
+ },
+ "construction": {
+  "finance": [
+   "view_all"
+  ],
+  "project_manager": [
+   "view_all",
+   "create",
+   "update",
+   "approve"
+  ],
+  "site_engineer": [
+   "view_all",
+   "create",
+   "update"
+  ]
+ },
+ "materials": {
+  "finance": [
+   "view_all"
+  ],
+  "project_manager": [
+   "view_all",
+   "create",
+   "update",
+   "approve"
+  ],
+  "site_engineer": [
+   "view_all",
+   "create",
+   "update"
+  ]
+ },
+ "finance": {
+  "sales_manager": [
+   "view_all"
+  ],
+  "finance": [
+   "view_all",
+   "create",
+   "update",
+   "approve"
+  ],
+  "project_manager": [
+   "view_all"
+  ]
+ },
+ "commissions": {
+  "sales_manager": [
+   "view_all"
+  ],
+  "marketing_admin": [
+   "view_all"
+  ],
+  "sales": [
+   "view_own"
+  ],
+  "finance": [
+   "view_all",
+   "approve"
+  ]
+ },
+ "customers": {
+  "sales_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "marketing_admin": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "sales": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "finance": [
+   "view_all"
+  ]
+ },
+ "financing": {
+  "sales_manager": [
+   "view_all",
+   "create",
+   "update",
+   "approve"
+  ],
+  "marketing_admin": [
+   "view_all"
+  ],
+  "sales": [
+   "view_own",
+   "create",
+   "update"
+  ],
+  "finance": [
+   "view_all",
+   "create",
+   "update",
+   "approve"
+  ]
+ },
+ "complaints": {
+  "sales_manager": [
+   "view_all",
+   "update",
+   "assign",
+   "create"
+  ],
+  "marketing_admin": [
+   "view_all",
+   "update",
+   "assign",
+   "create"
+  ],
+  "sales": [
+   "view_own",
+   "update",
+   "create"
+  ],
+  "finance": [
+   "view_all"
+  ]
+ },
+ "permits": {
+  "sales_manager": [
+   "view_all"
+  ],
+  "finance": [
+   "view_all"
+  ],
+  "project_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "site_engineer": [
+   "view_all",
+   "update"
+  ]
+ },
+ "bank": {
+  "finance": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "sales_manager": [],
+  "project_manager": []
+ },
+ "quotations": {
+  "sales_manager": [
+   "view_all",
+   "create",
+   "update",
+   "approve"
+  ],
+  "marketing_admin": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "sales": [
+   "view_own",
+   "create",
+   "update"
+  ],
+  "finance": [
+   "view_all"
+  ]
+ },
+ "labor": {
+  "project_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "site_engineer": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "finance": [
+   "view_all",
+   "approve"
+  ],
+  "sales_manager": [
+   "view_all"
+  ]
+ },
+ "vendors": {
+  "finance": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "finance_manager": [
+   "view_all",
+   "create",
+   "update",
+   "manage"
+  ],
+  "project_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "site_engineer": [
+   "view_all"
+  ],
+  "sales_manager": [
+   "view_all"
+  ]
+ },
+ "subcon_finance": {
+  "project_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "site_engineer": [
+   "view_all",
+   "create"
+  ],
+  "finance": [
+   "view_all",
+   "approve"
+  ],
+  "finance_manager": [
+   "view_all",
+   "create",
+   "update",
+   "approve",
+   "manage",
+   "override"
+  ]
+ },
+ "reminders": {
+  "sales_manager": [
+   "view_all",
+   "manage"
+  ],
+  "marketing_admin": [
+   "view_all",
+   "manage"
+  ],
+  "dm_supervisor": [
+   "view_all",
+   "manage"
+  ],
+  "finance": [
+   "view_all"
+  ],
+  "finance_manager": [
+   "view_all",
+   "manage"
+  ],
+  "project_manager": [
+   "view_all"
+  ],
+  "sales": [
+   "view_all"
+  ]
+ },
+ "boq": {
+  "sales_manager": [
+   "view_all"
+  ],
+  "finance": [
+   "view_all"
+  ],
+  "project_manager": [
+   "view_all",
+   "create",
+   "update",
+   "delete"
+  ],
+  "site_engineer": [
+   "view_all"
+  ]
+ },
+ "subcon": {
+  "finance": [
+   "view_all"
+  ],
+  "project_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "site_engineer": [
+   "view_all"
+  ]
+ },
+ "progress_claims": {
+  "finance": [
+   "view_all",
+   "approve"
+  ],
+  "project_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "site_engineer": [
+   "view_all",
+   "create",
+   "update"
+  ]
+ },
+ "change_orders": {
+  "finance": [
+   "view_all",
+   "approve"
+  ],
+  "project_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "site_engineer": [
+   "view_all"
+  ]
+ },
+ "procurement": {
+  "finance": [
+   "view_all",
+   "create",
+   "approve"
+  ],
+  "project_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "site_engineer": [
+   "view_all",
+   "create"
+  ]
+ },
+ "gl": {
+  "finance": [
+   "view_all",
+   "create",
+   "update"
+  ]
+ },
+ "files": {
+  "sales_manager": [
+   "view_all",
+   "create"
+  ],
+  "marketing_admin": [
+   "view_all",
+   "create"
+  ],
+  "sales": [
+   "view_all",
+   "create"
+  ],
+  "finance": [
+   "view_all",
+   "create"
+  ],
+  "project_manager": [
+   "view_all",
+   "create"
+  ],
+  "site_engineer": [
+   "view_all",
+   "create"
+  ]
+ },
+ "showroom": {
+  "sales_manager": [
+   "view_all",
+   "update"
+  ],
+  "marketing_admin": [
+   "view_all",
+   "update"
+  ],
+  "project_manager": [
+   "view_all",
+   "update"
+  ],
+  "sales": [
+   "view_all"
+  ],
+  "finance": [
+   "view_all"
+  ],
+  "site_engineer": []
+ },
+ "work_tasks": {
+  "sales_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "marketing_admin": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "sales": [
+   "view_own",
+   "create",
+   "update"
+  ],
+  "finance": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "project_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "site_engineer": [
+   "view_own",
+   "create",
+   "update"
+  ]
+ },
+ "activities": {
+  "sales_manager": [
+   "view",
+   "create"
+  ],
+  "marketing_admin": [
+   "view",
+   "create"
+  ],
+  "sales": [
+   "view",
+   "create"
+  ],
+  "finance": [
+   "view",
+   "create"
+  ],
+  "project_manager": [
+   "view",
+   "create"
+  ],
+  "site_engineer": [
+   "view",
+   "create"
+  ]
+ },
+ "notifications": {
+  "sales_manager": [
+   "view_own",
+   "update"
+  ],
+  "marketing_admin": [
+   "view_own",
+   "update"
+  ],
+  "sales": [
+   "view_own",
+   "update"
+  ],
+  "finance": [
+   "view_own",
+   "update"
+  ],
+  "project_manager": [
+   "view_own",
+   "update"
+  ],
+  "site_engineer": [
+   "view_own",
+   "update"
+  ]
+ },
+ "automation_rules": {
+  "sales_manager": [
+   "manage"
+  ],
+  "marketing_admin": [
+   "manage"
+  ]
+ },
+ "wa_templates": {
+  "sales_manager": [
+   "manage"
+  ],
+  "marketing_admin": [
+   "manage"
+  ]
+ },
+ "channels": {
+  "sales_manager": [
+   "manage"
+  ],
+  "marketing_admin": [
+   "manage"
+  ]
+ },
+ "broadcasts": {
+  "sales_manager": [
+   "manage"
+  ],
+  "marketing_admin": [
+   "manage"
+  ]
+ },
+ "inbox": {
+  "sales_manager": [
+   "view_all",
+   "create"
+  ],
+  "marketing_admin": [
+   "view_all",
+   "create"
+  ],
+  "sales": [
+   "view_own",
+   "create"
+  ]
+ },
+ "appointments": {
+  "sales_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "marketing_admin": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "sales": [
+   "view_own",
+   "create",
+   "update"
+  ]
+ },
+ "surveys": {
+  "sales_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "marketing_admin": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "sales": [
+   "view_own",
+   "create",
+   "update"
+  ],
+  "finance": [
+   "view_all"
+  ]
+ },
+ "users": {},
+ "permissions": {},
+ "audit_logs": {
+  "finance": [
+   "view_all"
+  ]
+ },
+ "tax": {
+  "finance": [
+   "manage"
+  ]
+ },
+ "handover": {
+  "finance": [
+   "view_all",
+   "create"
+  ],
+  "project_manager": [
+   "view_all",
+   "create"
+  ],
+  "site_engineer": [
+   "view_all"
+  ],
+  "sales_manager": [
+   "view_all"
+  ],
+  "marketing_admin": [
+   "view_all"
+  ],
+  "sales": [
+   "view_all"
+  ]
+ },
+ "warranty": {
+  "finance": [
+   "view_all"
+  ],
+  "project_manager": [
+   "view_all",
+   "create",
+   "update",
+   "approve"
+  ],
+  "site_engineer": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "sales_manager": [
+   "view_all",
+   "create"
+  ],
+  "marketing_admin": [
+   "view_all",
+   "create"
+  ],
+  "sales": [
+   "view_all",
+   "create"
+  ]
+ },
+ "petty_cash": {
+  "sales_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "marketing_admin": [
+   "view_own",
+   "create",
+   "update"
+  ],
+  "sales": [
+   "view_own",
+   "create",
+   "update"
+  ],
+  "finance": [
+   "view_all",
+   "create",
+   "update",
+   "approve"
+  ],
+  "project_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "site_engineer": [
+   "view_own",
+   "create",
+   "update"
+  ]
+ },
+ "fixed_assets": {
+  "finance": [
+   "view_all",
+   "create",
+   "update",
+   "approve"
+  ],
+  "project_manager": [
+   "view_all"
+  ]
+ },
+ "loans": {
+  "finance": [
+   "view_all",
+   "create",
+   "update",
+   "approve"
+  ]
+ },
+ "marketing_fee": {
+  "sales_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "marketing_admin": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "sales": [
+   "view_own",
+   "create"
+  ],
+  "finance": [
+   "view_all",
+   "update",
+   "approve"
+  ]
+ },
+ "settings": {
+  "sales_manager": [
+   "view_all"
+  ],
+  "marketing_admin": [
+   "view_all"
+  ],
+  "finance": [
+   "view_all"
+  ],
+  "finance_manager": [
+   "view_all"
+  ],
+  "project_manager": [
+   "view_all"
+  ],
+  "sales": [
+   "view_all"
+  ],
+  "site_engineer": [
+   "view_all"
+  ]
+ },
+ "catalog": {
+  "sales_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "marketing_admin": [
+   "view_all"
+  ],
+  "sales": [
+   "view_all"
+  ],
+  "finance": [
+   "view_all",
+   "update"
+  ],
+  "finance_manager": [
+   "view_all",
+   "update"
+  ],
+  "project_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "site_engineer": [
+   "view_all"
+  ]
+ },
+ "doc_requirements": {
+  "sales_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "marketing_admin": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "sales": [
+   "view_all"
+  ],
+  "finance": [
+   "view_all",
+   "update"
+  ],
+  "finance_manager": [
+   "view_all",
+   "update"
+  ],
+  "project_manager": [
+   "view_all"
+  ],
+  "site_engineer": [
+   "view_all"
+  ]
+ },
+ "aging": {
+  "sales_manager": [
+   "view_all"
+  ],
+  "marketing_admin": [
+   "view_all"
+  ],
+  "sales": [
+   "view_all"
+  ],
+  "finance": [
+   "view_all"
+  ],
+  "finance_manager": [
+   "view_all"
+  ],
+  "project_manager": [
+   "view_all"
+  ],
+  "site_engineer": [
+   "view_all"
+  ],
+  "dm_supervisor": [
+   "view_all"
+  ],
+  "dm_staff": [
+   "view_all"
+  ]
+ },
+ "partners": {
+  "sales_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "marketing_admin": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "dm_supervisor": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "sales": [
+   "view_all"
+  ],
+  "dm_staff": [
+   "view_all"
+  ],
+  "finance": [
+   "view_all",
+   "update"
+  ],
+  "finance_manager": [
+   "view_all",
+   "update"
+  ],
+  "project_manager": [
+   "view_all"
+  ]
+ },
+ "ads": {
+  "sales_manager": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "marketing_admin": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "finance": [
+   "view_all"
+  ],
+  "finance_manager": [
+   "view_all"
+  ],
+  "project_manager": [],
+  "site_engineer": [],
+  "sales": []
+ },
+ "analytics": {
+  "sales_manager": [
+   "view_all",
+   "manage"
+  ],
+  "marketing_admin": [
+   "view_all"
+  ],
+  "sales": [
+   "view_own"
+  ],
+  "finance": [
+   "view_all"
+  ],
+  "finance_manager": [
+   "view_all",
+   "manage"
+  ],
+  "project_manager": [
+   "view_all",
+   "manage"
+  ],
+  "site_engineer": [
+   "view_all"
+  ],
+  "dm_supervisor": [
+   "view_all",
+   "manage"
+  ],
+  "dm_staff": [
+   "view_all"
+  ]
+ },
+ "targets": {
+  "sales_manager": [
+   "view_all",
+   "create",
+   "update",
+   "manage"
+  ],
+  "marketing_admin": [
+   "view_all"
+  ],
+  "sales": [
+   "view_own"
+  ],
+  "finance": [
+   "view_all"
+  ],
+  "finance_manager": [
+   "view_all",
+   "manage"
+  ],
+  "project_manager": [
+   "view_all"
+  ],
+  "site_engineer": [],
+  "dm_supervisor": [
+   "view_all"
+  ],
+  "dm_staff": [
+   "view_all"
+  ]
+ },
+ "budget": {
+  "sales_manager": [
+   "view_all"
+  ],
+  "marketing_admin": [
+   "view_all"
+  ],
+  "sales": [],
+  "finance": [
+   "view_all",
+   "create",
+   "update"
+  ],
+  "finance_manager": [
+   "view_all",
+   "create",
+   "update",
+   "approve",
+   "manage"
+  ],
+  "project_manager": [
+   "view_all",
+   "create",
+   "update",
+   "delete"
+  ],
+  "site_engineer": [
+   "view_all"
+  ],
+  "dm_supervisor": [
+   "view_all"
+  ],
+  "dm_staff": [
+   "view_all"
+  ]
+ }
+}

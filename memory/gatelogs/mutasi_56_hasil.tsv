@@ -1,0 +1,52 @@
+M28	TERTANGKAP	M28 panel pembatalan dicabut dari layar Kontrak & Legal	K18: K18
+M29	TERTANGKAP	M29 tab 'Pembatalan & Refund' dicabut dari Keuangan	K19: K19
+M30	TERTANGKAP	M30 tab Keuangan tidak lagi hidup di URL (?tab=cancellations)	K19: K19
+M31	TERTANGKAP	M31 tab portal pembeli menjadi komponen MATI	K20: K20
+M32	TERTANGKAP	M32 daftar Keuangan mengetik label keadaan sendiri (SSOT bercabang)	K22: K22
+M33	TERTANGKAP	M33 portal berhenti menyebut DASAR ATURAN potongan	K22b: K22b
+M34	TERTANGKAP	M34 nomor akun bocor ke mata PEMBELI	K23: K23
+M35	TERTANGKAP	M35 dokumen portal dibuka lewat tautan mentah bertoken	K23b: K23b
+M36	TERTANGKAP	M36 layar berhenti menyebut SEBAB pembatalan belum boleh	K24: K24
+M37	TERTANGKAP	M37 tombol bayar refund tanpa penanda sekali-pakai (klik ganda bisa dobel)	K24b: K24b
+M38	TERTANGKAP	M38 layar kembali mengaku mesin pembatalan/refund 'belum ada'	K25: K25
+M39	LOLOS	M39 testId Fase 56 menjadi MATI (id terdaftar tetapi tidak dipakai layar)	
+M39	TERTANGKAP	M39 testId Fase 56 menjadi MATI (terdaftar tetapi tidak lagi dipakai layar)	K21: K21,D13
+M01	TERTANGKAP	M01 persentase potongan ditanam di kode (bukan dari Pusat Konfigurasi)	K2: K2,K2b
+M02	TERTANGKAP	M02 keadaan pembangunan unit diabaikan (dasar potongan dikarang)	K3: K3
+M03	TERTANGKAP	M03 uang diterima tidak dibaca dari saldo kewajiban kontrak	D5: D5,D12,D12b,D12c,D13,D17
+M04	TERTANGKAP	M04 'belum ada penerimaan' menjadi Rp 0 tanpa sebab	K4b: K4b,D3
+M05	TERTANGKAP	M05 nominal yang belum diketahui dicetak Rp 0 di dokumen	K4c: K4c
+M06	TERTANGKAP	M06 pengaju boleh memutuskan pengajuannya sendiri	K7: K7
+M07	TERTANGKAP	M07 satu pengajuan bisa diputus dua kali	K7b: K7b
+M08	TERTANGKAP	M08 keputusan memakai hitungan LAMA (tidak dihitung ulang)	K8b: K8b
+M09	TERTANGKAP	M09 pengajuan ganda tidak ditahan	D9b: D9b,D24b,D25,D25c
+M10	TERTANGKAP	M10 potongan tidak dibukukan (jurnal tidak berimbang)	D12b (lewat jalan lain): D11
+M11	TERTANGKAP	M11 utang refund kepada pembeli tidak dibukukan	D12b (lewat jalan lain): D11
+M12	TERTANGKAP	M12 utang refund dibukukan ke akun POTONGAN (uang pembeli hilang jejak)	D12b: K9,D12b
+M13	TERTANGKAP	M13 unit tidak dilepas kembali ke stok	D14: K10c,D14,D17,D17b,D18,D19
+M14	TERTANGKAP	M14 pelepasan unit TIDAK atomik (unit deal lain bisa ikut dilepas)	K10: K10
+M15	TERTANGKAP	M15 pelepasan unit tidak meninggalkan jejak di riwayat unit	K10b: K10b
+M16	TERTANGKAP	M16 idempotensi `client_ref` dimatikan (bisa dibayar dua kali)	D19: D19,D19b,D20,D21
+M17	TERTANGKAP	M17 pembayaran boleh MELEBIHI sisa utang refund	K12: K12,D20,D21,D21b
+M18	TERTANGKAP	M18 penahanan refund bisa diabaikan siapa saja (bukan hanya Manajer Keuangan)	K13: K13,D17b,D18,D19,D20,D21
+M19	TERTANGKAP	M19 alasan pengabaian tanpa batas huruf	K13: K13
+M20	TERTANGKAP	M20 penahanan 'menunggu penjualan ulang' dimatikan (janji SPR diabaikan)	D17: D17,D17b,D18,D19,D20,D21
+M21	TERTANGKAP	M21 urutan sebab dibalik: refund LUNAS dijawab 'belum disetujui'	K14 (lewat jalan lain): D21c
+M22	TERTANGKAP	M22 sebab penahanan memakai KODE mentah sebagai label	K6c: K6c
+M23	TERTANGKAP	M23 kode penahan baru tidak didaftarkan di Kamus Data	K5: K5,D23
+M24	TERTANGKAP	M24 batas alasan 10 huruf dicabut di lapis model	K15: K15,D7,D8
+M25	TERTANGKAP	M25 membayar refund memakai izin PEMUTUS (pemisahan tugas kabur)	K16: K16,D10b,D17,D17b
+M26	TERTANGKAP	M26 lingkup data sales dimatikan (pembatalan rekan ikut terlihat)	K16c (lewat jalan lain): D26
+M27	TERTANGKAP	M27 portal berhenti memakai mesin (pembeli & staf bisa beda angka)	K17: K17,D24b
+M32b	TERTANGKAP	M32b pengajuan yang belum diputus ditulis 'Rp 0' (utang refund belum lahir)	K22a: K22a
+M40	TERTANGKAP	M40 riwayat pratinjau dikembalikan MENTAH (layar kehilangan sebab penahanan)	K17c: K17c,D17d
+M41	TERTANGKAP	M41 panel portal memanggil jalur STAF (401 → pembeli terlempar keluar)	K23c: K23c
+M42	TERTANGKAP	M42 subledger kewajiban kontrak tidak ditutup (buku besar ≠ subledger)	K10f (lewat jalan lain): D15c
+M43	TERTANGKAP	M43 tagihan yang SUDAH LUNAS ikut ditandai 'dibatalkan'	K10e: K10e
+M44	TERTANGKAP	M44 penahanan hilang karena tautan deal BASI dibaca sebagai pembeli baru	K14c: K14c
+M45	TERTANGKAP	M45 penyaringan daftar Keuangan dikerjakan di PERAMBAN (baris yang dicari tersembunyi)	K22q: K22q,D25d
+M46	LOLOS	M46 daftar kosong karena saringan disebut 'belum ada pembatalan'	
+M46	TERTANGKAP	M46 daftar kosong karena saringan tidak dijelaskan sebabnya	K22r: K22r
+M14	TERTANGKAP	M14 pelepasan unit TIDAK atomik (unit deal lain bisa ikut dilepas)	K10: K10,K10b3
+M47	TERTANGKAP	M47 unit yang kembali ke stok masih menyimpan tautan PENJUALAN (mengaku terjual)	K10b2: K10b2
+M48	TERTANGKAP	M48 unit yang tertaut HANYA lewat penjualan tidak bisa dilepas ke stok	K10b3: K10b3

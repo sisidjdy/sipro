@@ -1,0 +1,30 @@
+{
+  "summary": "Iterasi 4 — verifikasi konversi 16 dropdown <SelectItem> → <ReferenceItems> + 2 gate script. HASIL: SEMUA LULUS. Backend pytest test_iteration4_reference.py 2/2 PASS: (a) GET /api/reference (superadmin) memuat grup 'wa_inbound_type' berisi text/image/document/location + grup 'docgen_block' berisi booking_fee_belum/slik_belum/demografi_belum_lengkap. (b) Grup registry po_status/po_type/stock_movement/lead_stage/integration_mode ada & non-kosong. Gate 62 (scripts/verify_card_drilldown.py) LULUS 148 pemeriksaan. audit_forms_deep.py LULUS: E1=E5=E6=0 (semua enum SelectItem hardcode sudah dibersihkan). Frontend (login superadmin@sipro.co.id/Sipro#2026 OK, redirect / dalam <15s): /procurement — dropdown 'Semua Status' menampilkan ['Semua Status','Draft','Disetujui','Diterima sebagian','Diterima','Batal'] dari registry; klik 'Draft' memfilter daftar tanpa error console. Dialog 'Buat PO' — dropdown po_type: ['Material','Jasa Subkontraktor','Umum / jasa lain']. /materials — dialog Transaksi Material (data-testid=txn-type-select): ['Penerimaan / GRN (masuk)','Pengeluaran / Issue (keluar)'] — 2 opsi Indonesia dari registry stock_movement. /leads/{id} — panel LeadLifecycle dialog 'Tandai Hilang / Daur Ulang' dropdown Tahap: ['Daur ulang','Hilang'] — HANYA 2 opsi (bukan seluruh tahap). /config › tab 'Integrasi WhatsApp' — dropdown Mode (data-testid=wa-config-mode): ['Live (kredensial terpasang)','Simulasi (tanpa kredensial)']. Smoke halaman /, /finance, /projects, /leads render tanpa blank, tanpa PAGEERROR, tanpa error 'SelectItem' di console (hanya warning WebSocket notifikasi & warning Recharts height=-1 pada beranda saat container transisi).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/", "issues": ["Console warning Recharts: 'The width(-1) and height(-1) of chart should be greater than 0' pada beranda — kontainer chart sempat 0px saat mount (kosmetik, tidak merusak fungsi)."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration4_reference.py",
+    "/app/test_reports/pytest/iteration4.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ReferenceItems membaca opsi dari useReference().options(group) → jika endpoint /api/reference gagal (5xx/latensi), dropdown akan kosong tanpa fallback teks. Pertimbangkan skeleton/pesan 'gagal memuat opsi' di ReferenceItems agar UX tidak diam.",
+    "Dropdown Mode WA panel data-testid=wa-config-mode berhasil dirender, namun struktur registry integration_mode kini pakai kode 'live'/'simulation' dengan label panjang berkurung ('Live (kredensial terpasang)'). Pastikan label ini konsisten di /api/wa/config/save (backend mengharap 'live'|'simulation' — sesuai code opsi, sudah cocok).",
+    "Warning WebSocket /api/ws/notifications 'closed before connection established' berulang di setiap navigasi — kemungkinan koneksi ditutup sebelum handshake selesai (mis. StrictMode double-effect). Kosmetik namun mencemari console; disarankan retry dengan backoff dan guard AbortController."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration4_reference.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "superadmin@sipro.co.id / Sipro#2026 (dari /app/memory/test_credentials.md)",
+  "seed_data_creation": "Tidak ada seed baru. Uji lead close dialog dibuka lalu ditutup (Batal / Escape) tanpa menyimpan — data lead 703fa987… tetap di tahap Akuisisi. Uji stock movement dialog dibuka & ditutup tanpa submit.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Login: POST /api/auth/login mengembalikan {data:{user}, access_token} di ROOT (bukan di data.token). Registry (/api/reference) memakai struktur {group: {label,strict,allow_new,dynamic,options:[{value,label},...]}} — akses via groups[g]['options']. Shadcn <Select> dirender sebagai <button role='combobox'> TANPA aria-haspopup — selector yang benar: '[role=\"dialog\"] [role=\"combobox\"]' atau langsung data-testid. Rute lead detail: /leads/{id} (bukan /crm/leads/{id}). LeadLifecyclePanel 'Tutup Lead' tombolnya bertext 'Tandai Hilang / Daur Ulang' data-testid=lead-stage-close. Dropdown Mode WA: data-testid=wa-config-mode (P94.configMode). Dropdown stock movement: data-testid=txn-type-select (bukan native <select>). Grup registry baru yang dipakai UI: po_status, po_type, stock_movement, lead_stage (dengan filter only=['lost','recycle']), integration_mode, wa_inbound_type, docgen_block."
+}

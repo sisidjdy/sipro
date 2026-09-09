@@ -1,0 +1,22 @@
+{
+  "summary": "Iteration 21 — SPR vs Tagihan Finance + tombol SPR resmi + jalur lama tertutup. Backend: pytest /app/backend/tests/test_iter21_spr_compare.py 5/5 PASSED (7.19s) via preview REACT_APP_BACKEND_URL. Meliputi (a) POST /api/documents {template_code:'SPR'} DITOLAK 400 ('kontrak'), (b) GET /api/finance/ar/{deal}/spr-compare tanpa kontrak → state 'tanpa_kontrak', (c) convert deal → contract, GET /api/contracts/{cid}/documents/available recommended_code='SPR_CASH_STAGED' can_generate true, POST /api/contracts/{cid}/documents → 200 dengan data.amounts_snapshot.terms terisi, jalur lama tetap 400, spr-compare state='cocok' all_match=true spr_source='snapshot', rows berisi nett_price/booking_fee/terms_count/terms_total/total_bill, finance AR unit_total == terms_total; (d) ganti skema kontrak via POST /api/payment-schemes/contracts/{cid} (owner) dengan termin baru → 200, AR direbuild (3 termin non-addon), paid tetap 5.000.000, spr-compare state='beda' mismatch>0, term_2 match=false; finalize + POST /documents/{id}/sign → 400 mengandung kata 'berbeda'; terbitkan ulang SPR → compare cocok kembali (older_documents=1) → sign 200. Gate scripts: /app/scripts/verify_payment_schemes.py → 'GATE 48 HIJAU — 65 pemeriksaan'; /app/scripts/verify_business_invariants.py → 'INVARIAN BISNIS LULUS (0 peringatan)'. UI smoke: finance@sipro.co.id → /finance › Piutang → 4 [data-testid=ar-row], klik detail membuka sheet; SprComparePanel muncul dengan data-testid=spr-compare-panel data-state='belum_terbit' (AR demo tanpa SPR), verdict terlihat, 13 [data-testid=spr-compare-row]. superadmin@sipro.co.id → /deals › Deal: 3 tombol [data-testid=deal-create-spr-button] hanya pada deal dengan kontrak; 1 tombol 'Jadikan Pembeli' untuk deal tanpa kontrak — sesuai spesifikasi. /documents?hub=dokumen › Dokumen Transaksi › Buat SPR membuka dialog 'Terbitkan SPR' dengan [data-testid=spr-deal-select] berisi 3 kontrak (format 'Pembeli — Unit — Skema', mis. 'Ibu Dewi Kartika — Unit A-01 — KPR'), memilih kontrak menampilkan [data-testid=spr-dialog-template] 'Akan diterbitkan: Surat Pesanan Rumah — KPR' berikut alasan blok (booking fee/SLIK) sesuai kontrak demo, tombol [data-testid=spr-dialog-submit] hadir (disabled saat can_generate false — sesuai instruksi jangan menandatangani demo). Tidak ada dokumen/kontrak demo yang diubah/ditandatangani.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iter21_spr_compare.py",
+    "/app/scripts/verify_payment_schemes.py",
+    "/app/scripts/verify_business_invariants.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "SprComparePanel state 'belum_terbit' + kalimat 'angka di kolom SPR adalah pratinjau dari kontrak & skema saat ini' — komunikasi UX sudah jelas; pertimbangkan tombol pintas 'Terbitkan SPR' langsung dari panel bila pengguna finance ingin memicu docgen (saat ini harus pindah ke Dokumen)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "superadmin@sipro.co.id, finance@sipro.co.id, owner@sipro.co.id — semua password Sipro#2026 (/app/memory/test_credentials.md).",
+  "seed_data_creation": "Pytest membuat 1 lead + 1 deal + 1 kontrak transien + 1 payment_scheme uji per run, semuanya dihapus di teardown (DELETE deal+lead dengan force+reason ≥10 huruf, payment_schemes.delete_one). Invarian bisnis re-checked green setelah run.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter21 fully green (backend + UI smoke). Command backend: cd /app/backend && python3 -m pytest tests/test_iter21_spr_compare.py -q. Untuk UI: finance→/finance Piutang→ar-row→ar-detail-button→SprComparePanel; superadmin→/deals (deal-create-spr-button hanya untuk booked/completed dengan contract_id) dan /documents?hub=dokumen→Buat SPR (spr-deal-select→spr-dialog-template→spr-dialog-submit). Jalur lama POST /api/documents template_code=SPR wajib 400 'kontrak'. spr-compare payload penting: state ∈ {cocok,beda,belum_terbit,tanpa_kontrak}, spr_source ∈ {snapshot,current}, rows keys {nett_price,booking_fee,terms_count,term_N,terms_total,total_bill}. Skema swap (owner/manajer keuangan) diperbolehkan bila hanya booking fee/titipan (funding=='deposit'); penerimaan kas nyata → 400 'adendum'.",
+  "rca of the issue": "N/A — tidak ada defect terdeteksi; regresi iter21 hijau semua."
+}

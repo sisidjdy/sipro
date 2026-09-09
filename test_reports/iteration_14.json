@@ -1,0 +1,35 @@
+{
+  "summary": "Tested the 3 fixes end-to-end (BUG1 build schedule from template, BUG2 PDF worker preview, BUG3 custom RBAC roles). BUG1 UI, BUG2 UI, BUG3 UI/API all pass; BUG1 API is only partially tolerant — filtering /api/build/templates by the master unit_type_code (e.g. 'TIPE-36-72') still returns [], while case-insensitive name ('tipe 36/72') and 'Ruko' work.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/build/templates?unit_type=TIPE-36-72", "issue": "Returns empty array. Templates store unit_types as display names (e.g. 'Tipe 36/72'); build_engine.unit_type_keys() normalizes both `type` and `unit_type_code` from the incoming string but never resolves code<->name via master `unit_types` collection, so a code-based query never matches a name-based template. Expected (per review spec) to also return RUMAH-9W. Fix: in list_templates()/unit_type_keys(), if input matches a master `unit_types.code` or `unit_types.name`, add the alternate value to keys."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter14_bugs.py",
+    "/app/test_reports/pytest/iter14.xml"
+  ],
+  "action_items": [
+    "Make /api/build/templates unit_type filter tolerant to unit_type_code <-> unit_type name via master unit_types lookup (as promised in review request for 'TIPE-36-72')."
+  ],
+  "critical_code_review_comments": [
+    "backend/build_engine.py unit_type_keys(): normalizes the raw string values only; does not consult the master unit_types catalog to bridge code and name. This mismatch is user-visible when the front-end passes unit_type_code instead of the display name.",
+    "Backend response envelopes are inconsistent: /api/reference/<group> returns {data:{options:[]}} while /api/build/templates returns {data:[]} and /api/admin/roles returns {data:{...}}. Not a bug but complicates client and test code."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter14_bugs.py"
+  ],
+  "success_rate": {"backend": "89% (8/9)", "frontend": "100% (3/3 flows)"},
+  "test_credentials": "superadmin@sipro.co.id / Sipro#2026",
+  "seed_data_creation": "Created + deleted RBAC role qa_api_role via API test; created + deleted RBAC role peran_uji_qa via UI test; created build schedule for unit B-06 (Tipe 36/72) using RUMAH-9W (kept, does not need cleanup).",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "BUG1 UI (empty state + generate dialog + preselected unit + schedule + readiness update), BUG2 (pdf.js worker webpack chunk /static/js/vendors-node_modules_pdfjs-dist_build_pdf_worker_min_mjs.chunk.js, canvas 892x1262, no errors), BUG3 (SPA navigation from /admin/permissions to /admin/users picks up newly-added custom role in user-form-role select without reload) all verified working. Only remaining gap: templates endpoint tolerance to unit_type_code — filed under minor. Unit B-06 already has a schedule now; pick another Tipe unit via /api/build/unscheduled for re-runs. Existing test file /app/backend/tests/test_iter14_bugs.py can be reused for regression.",
+  "rca of the issue": "unit_type filter mismatch: templates.unit_types stores display names ('Tipe 36/72'); front-end may pass either 'Tipe 36/72' (name) or 'TIPE-36-72' (unit_type_code). unit_type_keys() only normalizes-lowercases the input; code and name normalize to different strings so template_matches() returns False. Repro: GET /api/build/templates?unit_type=TIPE-36-72 -> []. Fix: extend unit_type_keys() (or list_templates()) to look up master unit_types collection and add both the code and the name to the key set when either matches."
+}

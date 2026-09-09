@@ -1,0 +1,1640 @@
+From dd00dc31c0cd016bd7e718882d314f774e65194c Mon Sep 17 00:00:00 2001
+From: Yoga <pk.yogaswastika@gmail.com>
+Date: Sun, 6 Sep 2026 15:43:50 +0000
+Subject: [PATCH 1/2] docs(audit): dokumen temuan audit + instruksi perbaikan
+ berverifikasi
+
+Audit konfigurasi/wiring, WhatsApp, dokumen terbit, dan kartu keuangan
+terhadap commit 7da1bd5. 23 temuan dengan rujukan berkas:baris.
+
+Temuan tingkat KRITIS:
+- WA-02  wa_reminder_engine.py:206 membaca item.get("paid"); item termin
+         menyimpan "paid_amount" (finance_engine.py:142). Penjaga
+         "sisa_bayar <= 0" tidak pernah aktif -> termin lunas tetap
+         ditagih, nominal selalu bruto. Melanggar aturan No. 6 yang
+         ditulis docstring modul itu sendiri (baris 26).
+- WA-01  Kelima nilai bawaan reminder.template_* + booking_fee menunjuk
+         template payment_reminder yang sama (settings_store.py:125,
+         469, 474, 477, 502) -> pengingat garansi & peringatan tunggakan
+         pra-SP1 terkirim sebagai pesan angsuran. Tersamar di mode
+         simulasi karena _render menempel cand['reason'].
+- DOC-01 ar_router.py:228 membaca it.get("paid") -> kolom "Dibayar" pada
+         invoice pembeli selalu Rp 0, sementara baris TOTAL benar.
+
+Temuan lain: integritas template WA (parameter Meta, status, urutan
+variables, hapus/duplikat kode), invoice memakai layout LAPORAN/FAKTUR
+dan tidak ada di Pengaturan Dokumen, period_of diduplikasi 4x dengan 2
+perilaku, periode akuntansi dipotong dari UTC tanpa konversi WIB, kartu
+piutang vs drilldown beda sumber, 12 layar hardcode kosakata SSOT, dan
+gate audit_forms_deep buta terhadap <SelectItem>.
+
+Dokumen instruksi mewajibkan agen memverifikasi ulang tiap temuan
+sebelum memperbaiki, dan melaporkan temuan yang TIDAK terbukti.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_0123q1hRQ5paMwo2sBAr22XX
+---
+ memory/AUDIT_INSTRUKSI_PERBAIKAN.md | 489 ++++++++++++++++++++
+ memory/AUDIT_TEMUAN.md              | 672 ++++++++++++++++++++++++++++
+ 2 files changed, 1161 insertions(+)
+ create mode 100644 memory/AUDIT_INSTRUKSI_PERBAIKAN.md
+ create mode 100644 memory/AUDIT_TEMUAN.md
+
+diff --git a/memory/AUDIT_INSTRUKSI_PERBAIKAN.md b/memory/AUDIT_INSTRUKSI_PERBAIKAN.md
+new file mode 100644
+index 0000000..65b1950
+--- /dev/null
++++ b/memory/AUDIT_INSTRUKSI_PERBAIKAN.md
+@@ -0,0 +1,489 @@
++# Instruksi Perbaikan — hasil audit `AUDIT_TEMUAN.md`
++
++Untuk agen yang mengerjakan repo ini. Disusun 6 September 2026 terhadap commit `7da1bd5`.
++
++---
++
++## ATURAN KERJA — BACA SELURUHNYA SEBELUM MENYENTUH KODE
++
++### 1. Verifikasi dulu, perbaiki kemudian. Tanpa pengecualian.
++
++Dokumen temuan itu ditulis dari **pembacaan kode**, bukan dari menjalankan sistem. Kode bisa
++salah dibaca, dan konteks yang tidak terlihat bisa membuat sesuatu yang tampak salah menjadi
++benar.
++
++Untuk **setiap** temuan, urutannya:
++
++```
++1. Jalankan bagian "Cara membuktikan" pada temuan itu.
++2. Tulis hasilnya ke memory/AUDIT_VERIFIKASI.md dengan format di bawah.
++3. Baru perbaiki — dan hanya bila verifikasi Anda MEMBENARKAN temuan.
++```
++
++Format catatan verifikasi:
++
++```markdown
++## <ID> — <judul singkat>
++- Diverifikasi: <tanggal>
++- Cara: <perintah / langkah yang benar-benar dijalankan>
++- Hasil mentah:
++  ```
++  <keluaran apa adanya, jangan diringkas>
++  ```
++- Kesimpulan: TERBUKTI | TIDAK TERBUKTI | SEBAGIAN | TIDAK BISA DIVERIFIKASI
++- Catatan: <bila berbeda dari dokumen temuan, jelaskan bedanya>
++```
++
++### 2. Bila verifikasi Anda BERTENTANGAN dengan dokumen temuan — berhenti, jangan perbaiki.
++
++Tulis hasil verifikasi Anda, tandai temuan itu `TIDAK TERBUKTI`, dan lanjut ke temuan
++berikutnya. Laporkan di akhir. **Jangan** memperbaiki sesuatu yang tidak Anda buktikan
++sendiri rusak, dan **jangan** mengubah dokumen temuan agar cocok dengan kode.
++
++### 3. Satu temuan = satu commit.
++
++Pesan commit menyebut ID temuan dan ringkasan bukti verifikasi. Ini supaya setiap perbaikan
++bisa dibalik sendiri-sendiri kalau ternyata keliru.
++
++### 4. Aturan rumah proyek tetap berlaku.
++
++- `bash scripts/run_all_gates.sh` harus PASS sebelum batch mana pun dinyatakan selesai.
++  Catatan: gate `ux_audit` **sudah merah sebelum Anda mulai** (UI-01) — perbaiki sebagai
++  bagian dari Batch 4, jangan dianggap kerusakan yang Anda buat.
++- Python < 800 baris, JS < 500 baris.
++- Kosakata enum hanya dari SSOT `/api/reference` (`reference_p<NN>.py` + `_PHASES` di
++  `backend/reference.py`).
++- Setiap perbaikan yang mengubah perilaku wajib punya uji di `backend/tests/`.
++- Tulis ringkasan ke `memory/PRD.md` setelah setiap batch.
++
++### 5. Jangan memperluas cakupan.
++
++Kalau Anda menemukan cacat baru saat memperbaiki, **catat di `memory/AUDIT_TEMUAN_BARU.md`**
++dan lanjutkan. Jangan diperbaiki dalam batch yang sama.
++
++---
++
++## URUTAN PENGERJAAN
++
++| Batch | Isi | Alasan urutan |
++|---|---|---|
++| **1** | WA-02, DOC-01 — kesalahan nama field | Terkecil, terjelas, dampak terbesar. Kerjakan lebih dulu untuk membangun kepercayaan pada dokumen ini. |
++| **2** | WA-01, WA-03 — isi pengingat | Wajib selesai sebelum WhatsApp diubah ke mode live. |
++| **3** | WA-04..WA-09 — integritas template | Saling terkait; satu batch. |
++| **4** | DOC-02, CFG-03, CFG-04, UI-01, UI-02 | Konfigurasi & permukaan. |
++| **5** | CFG-01, CFG-02, FIN-01..FIN-03 | Menyentuh pembukuan — butuh kehati-hatian dan pengukuran dampak. |
++| **6** | Sapu bersih kelas bug yang sama ke seluruh repo | Lihat bagian akhir. |
++
++---
++
++# BATCH 1 — Kesalahan nama field
++
++## WA-02 — Termin lunas tetap ditagih
++
++**Verifikasi dulu**
++```python
++inv = await db.ar_invoices.find_one({"org_id": ORG_ID, "status": "partial"}, {"_id": 0})
++for it in inv["items"]:
++    print(it.get("label"), it.get("amount"), "paid=", it.get("paid"), "paid_amount=", it.get("paid_amount"))
++```
++Temuan TERBUKTI bila kolom `paid` bernilai `None` untuk semua item sementara `paid_amount`
++berisi angka.
++
++Lalu pastikan dampaknya nyata:
++```python
++import wa_reminder_engine as wre
++cands = await wre.candidates(ORG_ID)
++# cari kandidat yang item-nya sudah lunas (paid_amount == amount)
++```
++
++**Perbaikan**
++`backend/wa_reminder_engine.py:206` — baca field yang benar:
++```python
++sisa_bayar = int(item.get("amount") or 0) - int(item.get("paid_amount") or 0)
++```
++
++**Jangan berhenti di sini.** Nilai `wa_reminders.amount` yang sudah tersimpan dari
++menjalankan sebelumnya berisi angka bruto yang salah. Putuskan bersama pemilik produk:
++tandai baris lama sebagai tidak sahih, atau hitung ulang. **Jangan diam-diam menimpanya.**
++
++**Verifikasi sesudah**
++1. Buat invoice uji dengan 3 termin, bayar termin 1 penuh dan termin 2 sebagian.
++2. `wre.candidates(org)` → termin 1 **tidak boleh** muncul; termin 2 muncul dengan
++   nominal **sisa**, bukan bruto.
++3. Uji baru: `backend/tests/test_audit_wa02.py`.
++
++---
++
++## DOC-01 — Kolom "Dibayar" pada invoice selalu Rp 0
++
++**Verifikasi dulu**
++Terbitkan `GET /api/ar/{deal_id}/invoice/pdf` untuk deal yang sudah membayar sebagian.
++Baca PDF-nya. Temuan TERBUKTI bila setiap baris menampilkan "Rp 0" pada kolom Dibayar
++sementara baris TOTAL menampilkan angka yang benar.
++
++**Perbaikan**
++`backend/routers/ar_router.py:228`:
++```python
++_idr(it.get("paid_amount")),
++```
++
++Periksa juga apakah kolom "Status" per baris sudah benar (`it.get("status")` — item memang
++punya field ini, jadi seharusnya aman; pastikan dengan membaca satu dokumen nyata).
++
++**Verifikasi sesudah**
++Terbitkan ulang PDF yang sama. Jumlah kolom "Dibayar" seluruh baris **harus sama dengan**
++angka pada baris TOTAL. Tambahkan pemeriksaan ini sebagai uji, bukan hanya dilihat mata.
++
++---
++
++# BATCH 2 — Isi pengingat WhatsApp
++
++> **Batch ini adalah syarat go-live.** Selama belum selesai, mode WhatsApp tidak boleh
++> diubah ke `live`.
++
++## WA-01 — Lima jenis pengingat memakai satu template yang sama
++
++**Verifikasi dulu**
++```python
++import settings_store as st
++for k in ("reminder.template_warranty", "reminder.template_installment",
++          "reminder.template_overdue", "reminder.template_arrears",
++          "booking_fee.reminder_template"):
++    print(k, "=", await st.get(k, org_id=ORG_ID))
++tmpl = await db.wa_templates.find_one({"org_id": ORG_ID, "code": "payment_reminder"}, {"_id": 0})
++print(tmpl["body"], tmpl["variables"])
++```
++
++**Perbaikan**
++
++1. **Buat empat template baru** — satu per jenis pengingat — lewat seed idempoten baru
++   (`backend/seed_audit_wa01.py`), mengikuti pola `seed_phase99.py` (`initial_fields`,
++   idempoten, tidak menimpa yang sudah disunting admin). Variabel diambil dari `cand["vars"]`
++   yang sudah dihasilkan `wa_reminder_engine`, sehingga tidak perlu mengarang data baru:
++
++   | Kode template | Jenis | Variabel yang tersedia di `vars` |
++   |---|---|---|
++   | `reminder_warranty` | `warranty_expiring` | `nama`, `bagian`, `unit`, `tanggal`, `sisa` |
++   | `reminder_installment` | `installment_due` | `nama`, `termin`, `nominal`, `tanggal`, `unit` |
++   | `reminder_overdue` | `installment_overdue` | `nama`, `termin`, `nominal`, `tanggal`, `unit` |
++   | `reminder_arrears` | `arrears_warning` | `nama`, `unit`, `nominal`, `bulan`, `terlama` |
++   | `reminder_booking_fee` | `booking_fee_due` | `nama`, `termin`, `nominal`, `tanggal`, `unit` |
++
++   Kategori: `utility` untuk kelimanya — semuanya transaksional, bukan promosi.
++   Bahasa `id`. **Jangan** menaruh kalimat promosi di dalamnya (lihat WA-07).
++
++2. **Ubah nilai bawaan** di `backend/settings_store.py` baris 125, 469, 474, 477, 502 agar
++   menunjuk kode template masing-masing.
++
++3. **Migrasi organisasi yang sudah ada:** nilai lama tersimpan di DB dan akan menang atas
++   nilai bawaan baru. Tulis migrasi yang mengubah nilai `payment_reminder` menjadi kode baru
++   **hanya bila admin belum pernah mengubahnya sendiri** (cek `settings` yang punya
++   `updated_by`). Ikuti pola `backend/migrations.py`.
++
++**Verifikasi sesudah**
++- Jalankan setiap jenis pengingat di mode simulasi, dan periksa `payload` yang disusun untuk
++  Meta — bukan `wa_reminders.body`. Kelimanya harus memakai `template.name` yang berbeda.
++- Pengingat garansi tidak boleh memuat kata "angsuran" atau "DP".
++- Uji: `backend/tests/test_audit_wa01.py` — satu kasus per jenis, memeriksa nama template
++  dan jumlah parameter.
++
++---
++
++## WA-03 — Riwayat menampilkan pesan yang tidak pernah dikirim
++
++**Verifikasi dulu**
++Kirim satu pengingat di mode live ke nomor uji. Bandingkan `messages.body` di database
++dengan isi pesan yang benar-benar masuk ke WhatsApp.
++
++**Perbaikan**
++
++Setelah WA-01 selesai, seluruh isi pengingat sudah ada di dalam template, sehingga
++penempelan `reason` tidak lagi diperlukan sebagai penambal.
++
++1. `backend/wa_reminder_engine.py:362-368` — `_render` berhenti menempelkan `cand['reason']`
++   ke body. `reason` tetap disimpan di kolomnya sendiri (`wa_reminders.reason`) dan tetap
++   ditampilkan di layar sebagai **alasan internal**, dengan label yang jelas bahwa itu bukan
++   bagian dari pesan.
++2. Di mode `live`, `messages.body` harus diisi dari **body template yang sudah tersubstitusi
++   parameter**, bukan dari teks lain. Kalau perlu, susun ulang body dari
++   `template.body` + `template_params` supaya persis mencerminkan yang diterima pembeli.
++3. Layar riwayat pengingat memberi tanda yang jujur: mana isi pesan, mana catatan internal.
++
++**Verifikasi sesudah**
++Untuk satu pengiriman live, `messages.body` harus **identik karakter demi karakter** dengan
++pesan yang diterima di WhatsApp. Buktikan dengan tangkapan layar atau salinan pesan, bukan
++dengan membaca kode.
++
++---
++
++# BATCH 3 — Integritas template WhatsApp
++
++Kerjakan sebagai satu kesatuan; keenam temuan saling menopang.
++
++## WA-04 — Validasi body ↔ variables
++
++**Verifikasi dulu**
++```python
++import wa_templates_meta as wtm, wa_gateway as gw
++t = {"body": "Halo {{nama}}, unit {{unit}}", "variables": ["nama"]}
++print(wtm.to_meta_body(t["body"], t["variables"]))          # -> "Halo {{1}}, unit {{2}}"
++print(gw.template_params(t, {"nama": "A", "unit": "B"}))     # -> ["A"]  (hanya 1)
++```
++
++**Perbaikan**
++Buat satu fungsi kebenaran tunggal, mis. `wa_templates_meta.derive_variables(body)`, yang
++mengembalikan daftar placeholder **sesuai urutan kemunculannya di body**.
++
++- `create_template` dan `update_template` **menurunkan** `variables` dari body memakai fungsi
++  itu, tidak menerimanya dari payload. Bila pemanggil tetap mengirim `variables` yang
++  berbeda, tolak dengan **400** dan sebutkan bedanya.
++- `template_params` memakai daftar yang sama.
++
++**Verifikasi sesudah**
++Body dengan placeholder tak terdaftar harus menghasilkan 400 saat disimpan. Untuk setiap
++template yang ada di DB, `len(template_params(...)) == jumlah {{n}} pada to_meta_body(...)`.
++Jadikan ini uji yang berjalan atas **seluruh** template di DB, bukan satu contoh.
++
++## WA-05 — `status` tidak boleh diubah tangan
++
++`backend/routers/omnichannel_router.py:172` — keluarkan `"status"` dari daftar field yang
++boleh di-PUT. Status hanya boleh berubah lewat `wa_templates_meta.apply_meta_status`
++(hasil sync/webhook Meta) atau `initial_fields` saat pembuatan.
++
++Di mode simulasi status `approved` tetap boleh diberikan otomatis — itu perilaku yang sudah
++jujur dan dijelaskan di `status_note`. Yang dilarang adalah mengubahnya lewat API.
++
++**Verifikasi sesudah:** `PUT {"status": "approved"}` harus ditolak atau diabaikan, dan
++template yang `meta_status = NOT_SUBMITTED` tidak boleh bisa dikirim di mode live.
++
++## WA-06 — `variables` beku setelah disetujui Meta
++
++Bila `meta_status == "APPROVED"`, tolak perubahan `body` maupun `variables` dengan 400 yang
++menjelaskan bahwa template harus diajukan ulang sebagai versi baru. Setelah WA-04, `variables`
++sudah diturunkan dari body, jadi cukup membekukan `body`.
++
++**Verifikasi sesudah:** ubah body template `APPROVED` → harus 400.
++
++## WA-07 — Kategori template
++
++Perbaiki kategori dua template bawaan:
++- `welcome` → `marketing` (sapaan penjualan)
++- `price_info` → `marketing` (harga + ajakan survey)
++
++Lalu **tutup celahnya**, jangan hanya perbaiki datanya. Di `wa_compliance.check_outbound`,
++tambahkan penjaga: template berkategori `utility` yang isinya memuat penanda promosi
++(diskon, promo, penawaran, harga mulai, ajakan) diberi **peringatan** di layar saat disimpan,
++supaya salah kategori berikutnya ketahuan sebelum terkirim. Ini pemeriksaan bantu, bukan
++pengganti penilaian manusia — jangan dibuat memblokir.
++
++**Verifikasi sesudah:** nomor yang opt-out tidak lagi menerima `welcome` maupun `price_info`.
++
++## WA-08 — Template terpakai tidak boleh dihapus
++
++`delete_template` memeriksa pemakaian sebelum menghapus:
++- `wa_playbooks` dengan `template_code` yang sama,
++- `automation_rules` dengan aksi `send_template`,
++- nilai setting mana pun di `TEMPLATE_KEYS`.
++
++Bila terpakai, balas **409** dan sebutkan **di mana** ia dipakai, bukan sekadar menolak.
++
++## WA-09 — Kode template duplikat
++
++`create_template` tidak lagi membuat `promo_a1b2` diam-diam. Bila `_slug(name)` bentrok,
++balas **409** dengan kalimat yang menyarankan nama lain, dan sebutkan template yang sudah
++memakai kode itu.
++
++Untuk data yang sudah terlanjur: buat laporan (bukan penghapusan otomatis) berisi template
++berkode `*_[0-9a-f]{4}` beserta apakah ada yang merujuknya, agar admin memutuskan sendiri.
++
++---
++
++# BATCH 4 — Dokumen, konfigurasi, UI
++
++## DOC-02 — Invoice mendapat identitas dokumennya sendiri
++
++1. Tambahkan ke `backend/doc_layout.py` `TARGETS`:
++   ```python
++   "INVOICE_AR": ("Invoice / tagihan pembayaran unit", "table"),
++   "INVOICE_BOOKING": ("Tagihan booking fee", "letter"),
++   ```
++2. `backend/routers/ar_router.py:231` → `dl.get_layout(org, "INVOICE_AR")`
++3. `backend/routers/booking_fee_router.py:160` → `dl.get_layout(org, "INVOICE_BOOKING")`
++4. Migrasi: organisasi yang sudah menyesuaikan layout `LAPORAN` atau `FAKTUR` **mungkin**
++   melakukannya demi invoice. Salin layout `LAPORAN` yang tersimpan menjadi nilai awal
++   `INVOICE_AR`, dan `FAKTUR` menjadi nilai awal `INVOICE_BOOKING`, agar tampilan tidak
++   berubah mendadak. Setelah itu keduanya hidup terpisah.
++
++**Verifikasi sesudah:** kedua entri muncul di Pengaturan Dokumen; mengubah layout `FAKTUR`
++tidak lagi mengubah tagihan booking fee.
++
++## DOC-03 — Konfirmasi kebutuhan lebih dulu
++
++**Jangan langsung membangun.** Tanyakan ke pemilik produk apakah KWITANSI sudah memenuhi
++peran "bukti bayar", atau memang perlu dokumen terpisah per termin. Catat jawabannya di
++`memory/AUDIT_VERIFIKASI.md`, dan baru kerjakan bila memang dibutuhkan.
++
++## CFG-03 — Dua belas layar memakai SSOT
++
++Untuk setiap baris pada tabel CFG-03 di dokumen temuan, ganti daftar `<SelectItem>` hardcode
++dengan `useReference().options(<grup>)` mengikuti pola yang sudah dipakai di layar lain
++(cari contoh dengan `grep -rn "options(" frontend/src/components | head`).
++
++Perhatian khusus **`components/documents/DocumentDialogs.js:117`**: layar itu kehilangan dua
++peran penandatangan yang ada di SSOT (`notary`, `witness`). Memakai SSOT akan **menambah
++pilihan yang selama ini tidak ada** — pastikan alur di baliknya memang menerima kedua nilai
++itu sebelum menyalakannya.
++
++Nilai teknis seperti `all`, `__all__`, `__auto__`, `__none` bukan kosakata SSOT — biarkan
++sebagai literal.
++
++## CFG-04 — Tutup titik buta gate
++
++Tambahkan pemeriksaan E6 pada `scripts/audit_forms_deep.py`: `<SelectItem value="literal">`
++yang himpunan nilainya merupakan bagian dari salah satu grup SSOT dilaporkan sebagai
++**BLOCKING**, dengan nama grup yang seharusnya dipakai. Abaikan nilai teknis di atas.
++
++Setelah CFG-03 selesai, gate ini harus hijau. **Jangan** melonggarkan gate agar hijau —
++kalau masih merah, berarti masih ada layar yang belum diperbaiki.
++
++## UI-01 — Empat testid statis
++
++Ikuti pesan `scripts/ux_audit.py`: tambahkan pembeda baris (`aria-label` atau `data-*`
++berisi kunci baris). Gate harus hijau setelahnya.
++
++## UI-02 — Halaman kepatuhan tidak bisa dicapai
++
++`/privacy`, `/terms`, dan `/data-deletion` adalah halaman wajib kepatuhan. Tambahkan tautan
++di footer aplikasi atau di menu profil pemakai. `/portal/*`, `/showroom/:token`, dan
++`/site-plan/studio/:projectId` memang sengaja di luar nav — daftarkan sebagai pengecualian
++yang tercatat di `scripts/check_nav_map.py` supaya peringatannya berhenti berbunyi.
++
++---
++
++# BATCH 5 — Pembukuan
++
++> Batch ini menyentuh angka yang dipakai mengambil keputusan dan menyusun laporan.
++> **Ukur dampaknya dulu, baru ubah.**
++
++## CFG-01 — Satu `period_of`
++
++**Verifikasi dulu**
++```python
++import withholding_engine, tax_engine, p27_utils, gl_periods
++for m in (withholding_engine, tax_engine, p27_utils, gl_periods):
++    print(m.__name__, repr(m.period_of("")), repr(m.period_of(None)), repr(m.period_of("2026-0")))
++```
++
++**Perbaikan**
++Pindahkan ke satu tempat (`backend/gl_periods.py` adalah rumah yang paling wajar), lalu
++ketiga modul lain mengimpor dari sana. Tetapkan satu perilaku untuk masukan tidak sah dan
++**tulis alasannya di docstring**: mengembalikan `None` lebih aman daripada `""`, karena `""`
++adalah nilai yang tampak sah dan bisa masuk ke query tanpa ketahuan.
++
++Sebelum menyeragamkan, cari pemanggil yang **bergantung** pada perilaku lama:
++```bash
++grep -rn "period_of(" backend/ --include=*.py | grep -v "def period_of"
++```
++
++## CFG-02 — Periode akuntansi harus memakai WIB
++
++**Verifikasi dulu — ukur dampaknya sebelum mengubah apa pun**
++```python
++print(gl_periods.period_of("2026-08-31T19:00:00+00:00"))   # 1 Sep 02:00 WIB
++# berapa banyak yang terdampak:
++n = await db.journal_entries.count_documents({"date": {"$regex": "T(1[7-9]|2[0-3]):"}})
++print("jurnal dengan jam UTC >= 17:00 (yakni hari berikutnya di WIB):", n)
++```
++
++**Perbaikan**
++Tambahkan konversi WIB di satu tempat (`gl_periods`), dipakai semua pemanggil:
++```python
++WIB = timezone(timedelta(hours=7))
++def period_of(value):
++    """Periode akuntansi menurut kalender WIB — bukan potongan mentah string UTC."""
++    ...  # parse ISO -> astimezone(WIB) -> strftime("%Y-%m")
++```
++
++**Ini mengubah angka historis.** Jangan menjalankannya diam-diam:
++1. Hitung berapa jurnal yang berpindah periode.
++2. Bila ada yang berpindah ke periode yang **sudah ditutup**, laporkan daftarnya ke pemilik
++   usaha dan tunggu keputusan. Jangan membuka periode tertutup atas inisiatif sendiri.
++3. Tulis hasilnya di `memory/AUDIT_VERIFIKASI.md`.
++
++## FIN-01 — Kartu dan rinciannya satu sumber
++
++**Verifikasi dulu — ukur selisihnya pada data nyata**
++```python
++kartu = (await finance_engine.dashboard(ORG_ID))["ar_outstanding"]
++rows  = (await finance_drilldown.drilldown(ORG_ID, "ar_outstanding"))["rows"]
++print("kartu:", kartu, "jumlah rincian:", sum(r["amount"] for r in rows), "selisih:", kartu - sum(r["amount"] for r in rows))
++```
++Kalau selisihnya nol pada data sekarang, temuan ini **belum terbukti berdampak** — tetap
++perbaiki strukturnya, tetapi turunkan tingkatnya dan catat di verifikasi.
++
++**Perbaikan**
++Satu fungsi menghasilkan baris-barisnya; kartu = jumlah baris itu. Bukan dua query yang
++kebetulan menghasilkan angka mirip. Ini aturan yang sudah ditulis proyek ini sendiri di
++Fase 92 — sekarang dijadikan kode, bukan niat.
++
++Tambahkan gate `scripts/verify_card_drilldown.py` yang, untuk setiap kunci drilldown,
++membandingkan angka kartu dengan jumlah baris rinciannya dan gagal bila berbeda.
++
++## FIN-02 — Pemotongan diam-diam
++
++Untuk setiap `.to_list(2000)` di jalur agregasi keuangan: hitung dulu jumlah dokumen
++sebenarnya. Bila melebihi batas, **kembalikan penanda `truncated: true`** dan tampilkan di
++layar. Lebih baik pemakai tahu angkanya terpotong daripada percaya angka yang salah.
++Untuk agregasi murni, pertimbangkan pipeline `$group` supaya batas tidak diperlukan.
++
++## FIN-03 — "DSO" diberi nama yang jujur
++
++Dua pilihan, putuskan bersama pemilik usaha:
++1. Hitung DSO yang benar: `(piutang / penjualan kredit periode) × jumlah hari periode`.
++2. Atau pertahankan rumusnya dan **ganti namanya** menjadi sesuatu yang jujur
++   (mis. "Indeks piutang tertahan"), karena angka sekarang bukan jumlah hari.
++
++Yang tidak boleh: membiarkan angka bukan-hari tetap berlabel DSO di layar pemilik usaha.
++
++---
++
++# BATCH 6 — Sapu bersih kelas bug yang sama
++
++WA-02 dan DOC-01 lahir dari satu pola: **membaca nama field yang salah pada objek yang
++bentuknya mirip** (item termin punya `paid_amount`, invoice punya `paid`). Pola ini belum
++disapu ke seluruh repo.
++
++**Yang dikerjakan**
++
++1. Susun daftar bentuk dokumen dan nama field uangnya:
++   `ar_invoices.items[]` → `paid_amount` · `ar_invoices` → `paid` ·
++   `ap_invoices` → ? · `receipts` → ? · dan seterusnya.
++   Tulis ke `memory/FIELD_MAP.md`. Ini juga menjadi rujukan agen berikutnya.
++2. Cari pembacaan yang tidak cocok:
++   ```bash
++   grep -rn '\b\(it\|item\|itm\|row\|r\)\b\.get("paid")' backend/ --include=*.py
++   grep -rn '\b\(inv\|invoice\)\b\.get("paid_amount")' backend/ --include=*.py
++   ```
++   Perluas untuk pasangan field lain yang Anda temukan di langkah 1.
++3. Buat gate `scripts/verify_field_names.py` yang menjaga peta itu, supaya kesalahan yang
++   sama tidak lahir lagi. Daftarkan di `run_all_gates.sh`.
++
++**Ini yang paling berharga dari seluruh dokumen ini.** Memperbaiki dua baris itu mudah;
++mencegah baris ketiga adalah pekerjaan yang sebenarnya.
++
++---
++
++# LAPORAN AKHIR YANG DIHARAPKAN
++
++Setelah selesai, tulis `memory/AUDIT_HASIL.md` berisi:
++
++1. Tabel seluruh ID temuan × kesimpulan verifikasi Anda
++   (TERBUKTI / TIDAK TERBUKTI / SEBAGIAN / TIDAK BISA DIVERIFIKASI) × status perbaikan.
++2. **Temuan yang TIDAK terbukti, beserta buktinya.** Bagian ini sama pentingnya dengan yang
++   terbukti — dokumen audit ini ditulis tanpa menjalankan sistem, jadi sebagian pasti meleset.
++3. Cacat baru yang Anda temukan (`AUDIT_TEMUAN_BARU.md`).
++4. Keluaran `bash scripts/run_all_gates.sh` apa adanya.
++5. Daftar area yang belum diaudit sama sekali (bagian F dokumen temuan) — supaya sesi
++   berikutnya tahu di mana harus mulai.
++
++**Jangan menulis "SELESAI" untuk temuan yang tidak Anda verifikasi sendiri.**
+diff --git a/memory/AUDIT_TEMUAN.md b/memory/AUDIT_TEMUAN.md
+new file mode 100644
+index 0000000..0062d64
+--- /dev/null
++++ b/memory/AUDIT_TEMUAN.md
+@@ -0,0 +1,672 @@
++# Dokumen Temuan Audit — SIPRO (repo `pandeyoga/dadada`)
++
++Disusun 6 September 2026 terhadap commit `7da1bd5`.
++Pendamping: `AUDIT_INSTRUKSI_PERBAIKAN.md`.
++
++## Cara membaca dokumen ini (untuk agen AI)
++
++Setiap temuan punya bentuk yang sama:
++
++| Bagian | Isi |
++|---|---|
++| **ID** | Kode unik, dipakai di dokumen instruksi perbaikan |
++| **Tingkat** | KRITIS / TINGGI / SEDANG / RENDAH |
++| **Status** | `TERBUKTI DARI KODE` atau `PERLU VERIFIKASI RUNTIME` |
++| **Bukti** | `berkas:baris` — sudah diverifikasi terhadap commit di atas |
++| **Apa yang terjadi** | Mekanismenya, bukan gejalanya |
++| **Akibat nyata** | Apa yang dialami pemakai/pembeli/pembukuan |
++| **Cara membuktikan** | Langkah agar agen bisa memastikan sendiri, bukan percaya dokumen ini |
++
++**Aturan untuk agen:** dokumen ini adalah HIPOTESIS BERBUKTI, bukan kebenaran final.
++Setiap temuan wajib diverifikasi ulang sebelum diperbaiki. Kalau verifikasi Anda
++bertentangan dengan dokumen ini, **tulis hasil verifikasi Anda dan jangan memperbaiki**
++sampai perbedaannya dijelaskan.
++
++## Ringkasan
++
++| Area | KRITIS | TINGGI | SEDANG | RENDAH |
++|---|---|---|---|---|
++| WhatsApp | 2 | 4 | 3 | 2 |
++| Dokumen terbit | 1 | 1 | 1 | — |
++| Konfigurasi & wiring | — | 2 | 2 | 1 |
++| Keuangan & KPI | — | 1 | 2 | — |
++| UI | — | — | 2 | — |
++
++**Pola yang berulang di hampir semua temuan:** modulnya menuliskan aturan yang benar di
++docstring, lalu aturan itu tidak berlaku karena satu kesalahan kecil di lapisan bawah —
++nama field salah, nilai bawaan salah, atau validasi yang tidak pernah ditulis. Dari luar
++sistem terlihat rapi dan terdokumentasi; yang gagal adalah hal-hal yang hanya terlihat
++kalau angkanya benar-benar ditelusuri.
++
++---
++
++# A. WHATSAPP
++
++## WA-01 — Lima jenis pengingat mengirim pesan yang SAMA, dan empat di antaranya salah
++
++**Tingkat:** KRITIS · **Status:** TERBUKTI DARI KODE
++
++**Bukti**
++```
++backend/wa_reminder_engine.py:47-53   TEMPLATE_KEYS
++backend/settings_store.py:125         booking_fee.reminder_template   = "payment_reminder"
++backend/settings_store.py:469         reminder.template_warranty      = "payment_reminder"
++backend/settings_store.py:474         reminder.template_installment   = "payment_reminder"
++backend/settings_store.py:477         reminder.template_overdue       = "payment_reminder"
++backend/settings_store.py:502         reminder.template_arrears       = "payment_reminder"
++backend/seed_phase29.py:80-82         isi template payment_reminder
++```
++
++**Apa yang terjadi**
++Kelima jenis pengingat (`warranty_expiring`, `installment_due`, `installment_overdue`,
++`arrears_warning`, `booking_fee_due`) memakai nilai bawaan yang sama: template
++`payment_reminder`, yang isinya:
++
++> "Halo {{nama}}, kami ingatkan angsuran/DP unit Anda akan jatuh tempo. Mohon konfirmasi
++> jadwal pembayaran ya. Terima kasih."
++
++**Akibat nyata**
++- Pembeli yang **masa garansinya akan habis** menerima pesan bahwa **angsurannya jatuh tempo**.
++- **Peringatan tunggakan pra-SP1** — pesan bermuatan hukum — terkirim sebagai pengingat angsuran biasa.
++- Pengingat **booking fee** (calon pembeli, belum jadi pelanggan) juga memakai kalimat angsuran.
++- Template hanya punya satu variabel (`nama`). Nominal, tanggal jatuh tempo, dan kode unit
++  **tidak pernah sampai** ke pembeli di mode live.
++
++**Kenapa ini tidak terlihat sekarang**
++Di mode simulasi, `_render` (baris 362-368) menempelkan `cand['reason']` ke akhir pesan,
++dan `reason` memang berisi kalimat spesifik per jenis. Jadi riwayat di layar terlihat benar.
++Di mode **live**, Meta hanya mengirim body template yang sudah disetujui beserta
++parameternya — `reason` yang ditempel itu tidak ikut terkirim. Cacatnya baru muncul di hari
++pertama go-live, ke seluruh pembeli sekaligus.
++
++**Cara membuktikan**
++1. `python3 -c "import settings_store"` lalu baca nilai bawaan kelima kunci di atas.
++2. Ubah channel ke mode live (atau paksa adapter Meta di uji), jalankan
++   `wa_reminder_engine.run(kind="warranty_expiring")`, dan periksa `payload` yang dikirim
++   ke Meta — bukan `wa_reminders.body`.
++3. Bandingkan `payload["template"]["name"]` untuk kelima jenis: semuanya `payment_reminder`.
++
++---
++
++## WA-02 — Termin yang SUDAH DIBAYAR tetap ditagih, dan nominalnya selalu bruto
++
++**Tingkat:** KRITIS · **Status:** TERBUKTI DARI KODE
++
++**Bukti**
++```
++backend/wa_reminder_engine.py:206   sisa_bayar = int(item.get("amount") or 0) - int(item.get("paid") or 0)
++backend/wa_reminder_engine.py:207   if sisa_bayar <= 0 or not item.get("due_date"): continue
++backend/finance_engine.py:142       item dibuat dengan field "paid_amount", BUKAN "paid"
++backend/finance_engine.py:224,228   pembayaran menambah it["paid_amount"]
++backend/wa_reminder_engine.py:26    docstring: "Tidak mengingatkan hal yang sudah beres: termin lunas..."
++```
++
++**Apa yang terjadi**
++Item termin AR menyimpan pembayaran di field **`paid_amount`**. Baris 206 membaca
++**`paid`** — field yang tidak pernah ada pada item. `item.get("paid")` selalu `None` → 0.
++
++Akibatnya `sisa_bayar` **selalu sama dengan `amount` penuh**, dan penjaga di baris 207
++(`if sisa_bayar <= 0: continue`) **tidak pernah aktif satu kali pun**.
++
++**Akibat nyata**
++- Pembeli yang sudah melunasi termin 1 dan 2 tetap menerima pengingat untuk termin 1 dan 2,
++  selama invoice induknya belum berstatus `paid` seluruhnya.
++- Nominal yang disebut selalu **bruto**: pembeli yang sudah membayar 80% diberi tahu bahwa
++  ia berutang 100%.
++- Angka ini juga masuk `wa_reminders.amount`, jadi laporan pengingat ikut salah.
++- Aturan No. 6 yang tertulis di docstring modul ini **tidak pernah berlaku**.
++
++**Cara membuktikan**
++```python
++inv = await db.ar_invoices.find_one({"status": "partial"})
++[(i["label"], i.get("amount"), i.get("paid"), i.get("paid_amount")) for i in inv["items"]]
++# -> kolom "paid" akan None untuk semua item; "paid_amount" berisi nilai sebenarnya
++```
++Lalu jalankan `wa_reminder_engine.candidates(org)` pada invoice itu dan lihat apakah termin
++yang `paid_amount == amount` tetap muncul sebagai kandidat.
++
++---
++
++## WA-03 — Yang tercatat di riwayat BUKAN yang diterima pembeli
++
++**Tingkat:** TINGGI · **Status:** TERBUKTI DARI KODE
++
++**Bukti**
++```
++backend/wa_reminder_engine.py:362-368  _render() menempel cand['reason'] ke body
++backend/wa_reminder_engine.py:449-453  body dipakai untuk pencatatan; Meta menerima template+params
++backend/wa_gateway.py:305              msg["body"] = text  (teks hasil _render)
++backend/wa_gateway.py:329-333          payload live = _template_payload(...) — tanpa body itu
++```
++
++**Apa yang terjadi**
++`_render` menghasilkan `body` = isi template + `"\n\n" + reason`. Nilai itu disimpan ke
++`wa_reminders.body` dan `messages.body`, dan itulah yang dilihat staf di layar riwayat.
++Yang dikirim ke Meta adalah nama template + daftar parameter.
++
++**Akibat nyata**
++Staf membuka riwayat, melihat pesan yang lengkap dan masuk akal, lalu menyimpulkan pembeli
++sudah diberi tahu dengan benar. Pembeli menerima kalimat generik tanpa nominal dan tanggal.
++Ketika terjadi sengketa ("saya tidak pernah diberi tahu"), catatan sistem **membela hal yang
++tidak pernah dikirim**.
++
++**Cara membuktikan**
++Kirim satu pengingat di mode live, lalu bandingkan `messages.body` di database dengan isi
++pesan yang benar-benar masuk ke WhatsApp nomor uji.
++
++---
++
++## WA-04 — Jumlah parameter template bisa tidak cocok dengan yang didaftarkan ke Meta
++
++**Tingkat:** TINGGI · **Status:** TERBUKTI DARI KODE
++
++**Bukti**
++```
++backend/wa_templates_meta.py:25-34   to_meta_body(): order = variables + placeholder yang belum terdaftar
++backend/wa_gateway.py:241-243        template_params(): HANYA mengikuti template["variables"]
++backend/routers/omnichannel_router.py:149  variables diterima mentah dari payload, tanpa validasi
++```
++
++**Apa yang terjadi**
++Saat template diajukan ke Meta, `to_meta_body` menomori placeholder `{{1}}..{{n}}` memakai
++`variables` **ditambah** placeholder apa pun di body yang belum terdaftar di `variables`.
++Saat mengirim, `template_params` hanya menyusun parameter dari `variables`.
++
++Jika body memuat placeholder yang tidak ada di `variables`, Meta mengharapkan **n**
++parameter tetapi sistem mengirim **kurang dari n**.
++
++**Akibat nyata**
++Setiap pengiriman template tersebut gagal dengan **#132000 (number of parameters mismatch)**.
++Karena `create_template` dan `update_template` menerima `variables` apa adanya dari payload
++tanpa memeriksanya terhadap body, kondisi ini bisa dibuat siapa saja lewat UI tanpa peringatan.
++
++**Cara membuktikan**
++Buat template body `"Halo {{nama}}, unit {{unit}}"` dengan `variables: ["nama"]`.
++Jalankan `wa_templates_meta.meta_components(tmpl)` → body menjadi `"Halo {{1}}, unit {{2}}"`.
++Jalankan `wa_gateway.template_params(tmpl, {"nama":"A","unit":"B"})` → `["A"]` (satu parameter).
++
++---
++
++## WA-05 — Template bisa ditandai "approved" tanpa Meta pernah menyetujuinya
++
++**Tingkat:** TINGGI · **Status:** TERBUKTI DARI KODE
++
++**Bukti**
++```
++backend/routers/omnichannel_router.py:172   daftar field yang boleh di-PUT memuat "status"
++backend/wa_compliance.py:148-152            check_outbound hanya melihat template["status"] != "approved"
++```
++
++**Apa yang terjadi**
++`PUT /api/wa-templates/{id}` mengizinkan field `status` diubah langsung. Penjaga kepatuhan
++di `check_outbound` hanya membaca `status`, bukan `meta_status`.
++
++**Akibat nyata**
++Admin (atau skrip mana pun dengan izin `wa_templates:manage`) bisa menandai template
++`approved` padahal `meta_status` masih `NOT_SUBMITTED`. Penjaga lolos, gateway mengirim,
++Meta menolak. Yang lebih berbahaya: broadcast massal berjalan penuh lalu gagal seluruhnya,
++dan kualitas nomor ikut turun.
++
++**Cara membuktikan**
++`PUT /api/wa-templates/{id}` dengan body `{"status": "approved"}` pada template yang
++`meta_status = "NOT_SUBMITTED"`, lalu kirim memakai template itu di mode live.
++
++---
++
++## WA-06 — Urutan `variables` bisa diubah setelah template disetujui Meta
++
++**Tingkat:** TINGGI · **Status:** TERBUKTI DARI KODE
++
++**Bukti**
++```
++backend/routers/omnichannel_router.py:172   "variables" boleh di-PUT kapan saja
++backend/wa_gateway.py:241-243               urutan parameter mengikuti variables saat KIRIM
++```
++
++**Apa yang terjadi**
++Meta membekukan pemetaan `{{1}}..{{n}}` pada saat template disetujui. Mengubah urutan
++`variables` di sistem lokal setelah itu tidak mengubah apa pun di Meta, tetapi mengubah
++urutan nilai yang dikirim.
++
++**Akibat nyata**
++Parameter tertukar diam-diam. Pembeli menerima kalimat seperti
++"Halo 15 Oktober 2026, termin Budi Santoso sebesar A-07 jatuh tempo Rp 250.000.000."
++Tidak ada galat, tidak ada peringatan — pesannya terkirim sukses.
++
++**Cara membuktikan**
++Setelah sebuah template `APPROVED`, balik urutan `variables` lewat PUT, lalu kirim.
++Bandingkan isi pesan yang diterima dengan urutan yang seharusnya.
++
++---
++
++## WA-07 — Kategori template salah, dan opt-out ikut terlewati karenanya
++
++**Tingkat:** SEDANG · **Status:** TERBUKTI DARI KODE
++
++**Bukti**
++```
++backend/seed_phase22.py:28-30   welcome    -> category "utility"  (isi: sapaan penjualan)
++backend/seed_phase22.py:31-33   price_info -> category "utility"  (isi: harga + ajakan survey)
++backend/wa_compliance.py:145    opt-out HANYA menolak category == "marketing"
++backend/wa_compliance.py:31-33  category_for() mengutamakan template["category"]
++backend/wa_playbooks.py:26      playbook first_touch memakai template welcome
++```
++
++**Apa yang terjadi**
++Dua template berisi materi promosi diberi kategori `utility`. Penjaga opt-out hanya menolak
++kategori `marketing`.
++
++**Akibat nyata**
++1. **Kepatuhan:** nomor yang sudah membalas "BERHENTI" tetap menerima `welcome` dan
++   `price_info`, karena keduanya lolos sebagai utility. Ini memicu Block/Report, yang
++   menurunkan quality rating nomor perusahaan.
++2. **Biaya:** Meta mengategorikan ulang secara otomatis. Template promosi yang diajukan
++   sebagai utility akan dipindah ke marketing (tarif ±3× lipat), atau ditolak.
++
++**Cara membuktikan**
++Daftarkan opt-out untuk sebuah nomor, lalu jalankan playbook `first_touch` ke nomor itu.
++Pesan akan terkirim, bukan ditolak.
++
++---
++
++## WA-08 — Template bisa dihapus walau masih dipakai playbook/pengingat
++
++**Tingkat:** SEDANG · **Status:** TERBUKTI DARI KODE
++
++**Bukti**
++```
++backend/routers/omnichannel_router.py:219-227   delete_template: hapus langsung, tanpa cek pemakaian
++backend/wa_playbooks.py                          playbook merujuk template lewat template_code
++backend/wa_reminder_engine.py:47-53              pengingat merujuk template lewat setting
++```
++
++**Akibat nyata**
++Menghapus template yang dirujuk membuat playbook atau pengingat berhenti bekerja diam-diam.
++Pengingat akan tercatat `dilewati / template_missing`; playbook tidak menghasilkan apa pun.
++Tidak ada peringatan saat penghapusan.
++
++**Cara membuktikan**
++Hapus template `welcome`, lalu jalankan playbook `first_touch`.
++
++---
++
++## WA-09 — Nama template yang sama menghasilkan kode duplikat
++
++**Tingkat:** SEDANG · **Status:** TERBUKTI DARI KODE
++
++**Bukti**
++```
++backend/routers/omnichannel_router.py:140-143   code = _slug(name); bila bentrok -> f"{code}_{new_id()[:4]}"
++backend/indexes.py:25                            index unik hanya pada (org_id, code)
++```
++
++**Apa yang terjadi**
++Membuat template bernama "Promo" dua kali menghasilkan `promo` dan `promo_a1b2`. Keduanya
++sah menurut index unik, keduanya tampil di daftar dengan nama yang identik.
++
++**Akibat nyata**
++Ini sumber duplikasi template yang terlihat di layar. Playbook merujuk `promo`; template
++kedua tidak pernah terpakai tetapi tetap muncul di daftar pilihan, dan admin tidak bisa
++membedakan keduanya dari nama.
++
++**Cara membuktikan**
++`POST /api/wa-templates` dua kali dengan `name: "Promo"`.
++
++---
++
++## WA-10 — Dua kosakata untuk satu variabel (`{{name}}` dan `{{nama}}`)
++
++**Tingkat:** RENDAH · **Status:** TERBUKTI DARI KODE
++
++**Bukti**
++```
++backend/seed_phase22.py:28-37    template memakai {{name}}, {{date}}
++backend/seed_phase29.py:80-84    template memakai {{nama}}
++backend/engine.py:324            return {"name": name, "nama": name, "date": date}  ← tambalan
++```
++
++Masalahnya ditambal dengan mengembalikan dua kunci untuk nilai yang sama, bukan
++diseragamkan. Template baru bisa memakai kosakata mana pun, dan kosakata variabel tidak
++terdaftar di SSOT `/api/reference` seperti enum lain.
++
++---
++
++## WA-11 — HEADER dari `components` bisa tersusun setelah BODY
++
++**Tingkat:** RENDAH · **Status:** PERLU VERIFIKASI RUNTIME
++
++**Bukti**
++```
++backend/wa_templates_meta.py:48-51
++comps.append({"type": "BODY", ...})
++for c in template.get("components") or []:
++    if c.get("type") in (...) and not (c.get("type") == "HEADER" and comps[0]["type"] == "HEADER"):
++```
++
++Bila `header_type` adalah `none`, `comps[0]` adalah BODY, sehingga syarat penjaga bernilai
++salah dan sebuah HEADER dari `components` ikut ditambahkan **setelah** BODY.
++
++**Perlu diverifikasi:** apakah Meta menolak susunan komponen seperti itu, atau menerimanya.
++Jangan diperbaiki sebelum perilaku Meta dipastikan dengan satu pengajuan template uji.
++
++---
++
++# B. DOKUMEN TERBIT
++
++## DOC-01 — Kolom "Dibayar" pada invoice pembeli selalu Rp 0
++
++**Tingkat:** KRITIS · **Status:** TERBUKTI DARI KODE
++
++**Bukti**
++```
++backend/routers/ar_router.py:228    _idr(it.get("paid"))          ← item tidak punya field "paid"
++backend/routers/ar_router.py:163    _idr(v) = f"Rp {int(v or 0)}"  ← None menjadi "Rp 0"
++backend/routers/ar_router.py:241    total_row memakai inv.get("paid")  ← invoice-level, nilainya BENAR
++backend/finance_engine.py:142       item menyimpan "paid_amount"
++```
++
++**Apa yang terjadi**
++Sama seperti WA-02: nama field salah. Setiap baris termin mencetak "Dibayar Rp 0", sementara
++baris TOTAL pada tabel yang sama mencetak jumlah yang benar, dan subtitle di atas tabel juga
++benar.
++
++**Akibat nyata**
++Invoice yang diserahkan kepada pembeli **bertentangan dengan dirinya sendiri**: semua baris
++mengatakan belum dibayar sepeser pun, TOTAL mengatakan sudah dibayar Rp 300 juta. Ini
++dokumen komersial yang bisa dipakai pembeli sebagai dasar sengketa.
++
++**Cara membuktikan**
++Terbitkan `GET /api/ar/{deal_id}/invoice/pdf` untuk deal yang sudah membayar sebagian.
++
++---
++
++## DOC-02 — Invoice memakai identitas dokumen milik jenis lain, dan tidak bisa diatur
++
++**Tingkat:** TINGGI · **Status:** TERBUKTI DARI KODE
++
++**Bukti**
++```
++backend/routers/ar_router.py:231           dl.get_layout(org, "LAPORAN")
++backend/routers/booking_fee_router.py:160  dl.get_layout(org, "FAKTUR")
++backend/doc_layout.py:44-69                TARGETS — tidak ada entri INVOICE apa pun
++```
++
++**Apa yang terjadi**
++- Invoice/tagihan unit memakai kode layout **`LAPORAN`** — layout laporan tabel internal
++  (laporan keuangan, denda, refund, mingguan).
++- Tagihan booking fee memakai kode layout **`FAKTUR`** — layout **faktur pajak**.
++- `doc_layout.TARGETS` berisi 21 jenis dokumen, dan tidak satu pun mewakili invoice.
++
++**Akibat nyata**
++1. Kedua invoice **tidak muncul di Pengaturan Dokumen**, jadi kop, footer, dan blok tanda
++   tangannya tidak bisa diatur sama sekali.
++2. Mengubah tampilan "Laporan" ikut mengubah invoice unit; mengubah "Faktur pajak" ikut
++   mengubah tagihan booking fee. Admin tidak diberi tahu.
++3. Invoice adalah dokumen komersial untuk pembeli; laporan adalah dokumen internal. Keduanya
++   memakai kop dan blok tanda tangan yang sama.
++
++**Cara membuktikan**
++Buka Pengaturan Dokumen dan cari entri untuk invoice — tidak ada. Lalu ubah layout
++`FAKTUR` dan cetak tagihan booking fee.
++
++---
++
++## DOC-03 — Tidak ada dokumen bukti bayar yang diterbitkan sistem
++
++**Tingkat:** SEDANG · **Status:** PERLU VERIFIKASI KEBUTUHAN BISNIS
++
++**Bukti**
++```
++backend/routers/portal_router.py:233   satu-satunya "bukti bayar" = unggahan pembeli
++backend/routers/ar_router.py:173       KWITANSI terbit hanya saat receipt dibuat
++```
++
++Sistem menerima bukti transfer dari pembeli, tetapi tidak pernah **menerbitkan** dokumen
++bukti pembayaran per termin yang bisa diunduh pembeli sebagai arsip.
++
++**Perlu dikonfirmasi ke pemilik produk:** apakah KWITANSI sudah dianggap memenuhi peran ini,
++atau memang dibutuhkan dokumen terpisah.
++
++---
++
++# C. KONFIGURASI & WIRING
++
++## CFG-01 — `period_of` diduplikasi empat kali dengan dua perilaku berbeda
++
++**Tingkat:** TINGGI · **Status:** TERBUKTI DARI KODE
++
++**Bukti**
++```
++backend/withholding_engine.py:54   return s[:7] if len(s) >= 7 else None
++backend/tax_engine.py:31           return s[:7] if len(s) >= 7 else None
++backend/p27_utils.py:34            return str(value or "")[:7]        ← "" bila kosong
++backend/gl_periods.py:17           return str(date_str or "")[:7]     ← "" bila kosong
++```
++
++**Akibat nyata**
++Untuk masukan kosong atau tidak lengkap, dua modul menghasilkan `None` dan dua modul
++menghasilkan `""`. Keduanya berperilaku berbeda sebagai kunci dict dan sebagai nilai query
++Mongo: `{"period": None}` cocok dengan dokumen berperiode null, `{"period": ""}` tidak cocok
++dengan apa pun. Penentuan periode akuntansi karena itu tidak deterministik antar modul.
++
++**Cara membuktikan**
++```python
++for m in (withholding_engine, tax_engine, p27_utils, gl_periods):
++    print(m.__name__, repr(m.period_of("")), repr(m.period_of(None)), repr(m.period_of("2026-0")))
++```
++
++---
++
++## CFG-02 — Periode akuntansi dipotong dari waktu UTC tanpa konversi WIB
++
++**Tingkat:** TINGGI · **Status:** TERBUKTI DARI KODE, DAMPAK PERLU DIUKUR
++
++**Bukti**
++```
++backend/core_utils.py:10-15   now() = datetime.now(timezone.utc); now_iso() = isoformat UTC
++backend/gl_periods.py:17      period_of() memotong 7 karakter pertama string UTC
++                              tidak ada konversi WIB di gl_engine.py / gl_periods.py /
++                              tax_engine.py / p27_utils.py
++```
++
++**Apa yang terjadi**
++WIB adalah UTC+7. Transaksi yang terjadi antara pukul **00:00 dan 07:00 WIB** memiliki cap
++waktu UTC pada **tanggal sebelumnya**. `period_of` memotong string UTC apa adanya.
++
++**Akibat nyata**
++- Penerimaan kas pukul 02:00 WIB tanggal 1 September tercatat pada tanggal 31 Agustus, dan
++  masuk **periode akuntansi Agustus**.
++- Bila Agustus sudah ditutup (`cash_period_lock` / `gl_periods`), jurnalnya akan digeser atau
++  ditolak — padahal transaksinya sah dan terjadi di bulan September.
++- Laporan harian dan bulanan bergeser untuk seluruh transaksi dini hari.
++
++**Cara membuktikan**
++```python
++from core_utils import now_iso
++import gl_periods
++# simulasikan 1 Sep 2026 02:00 WIB = 2026-08-31T19:00:00+00:00
++print(gl_periods.period_of("2026-08-31T19:00:00+00:00"))   # -> '2026-08', seharusnya '2026-09'
++```
++Lalu hitung berapa banyak `journal_entries` yang jam UTC-nya ≥ 17:00 untuk mengukur dampak nyata.
++
++---
++
++## CFG-03 — Dua belas layar frontend menuliskan sendiri kosakata yang sudah ada di SSOT
++
++**Tingkat:** SEDANG · **Status:** TERBUKTI DARI KODE
++
++**Bukti** — pasangan `berkas:baris` ↔ grup SSOT yang seharusnya dipakai:
++
++| Berkas frontend | Nilai hardcode | Grup SSOT |
++|---|---|---|
++| `components/config/WaIntegrationPanel.js:132` | live, simulation | `integration_mode` |
++| `components/contracts/CancellationPanel.js:456` | transfer, tunai | `refund_method` |
++| `components/customers/FinancingDialogs.js:169` | clear, flagged, pending, rejected | `slik_status` |
++| `components/documents/DocumentDialogs.js:117` | buyer, sales, seller | `signer_role` (SSOT punya 5 nilai) |
++| `components/field/PunchListPanel.js:81` | closed, in_progress, open, verified | `punch_status` |
++| `components/omni/CaptureFailuresPanel.js:148` | discarded, open, resolved | `capture_failure_status` |
++| `components/procurement/AddPODialog.js:105` | general, material, subcon | `po_type` |
++| `components/procurement/POPanel.js:67` | approved, cancelled, draft, partially_received, received | `po_status` |
++| `components/procurement/ThreeWayPanel.js:52` | flagged, matched | `threeway_status` |
++| `components/sales/LeadLifecyclePanel.js:271` | lost, recycle | `lead_stage` |
++| `components/subcon/SPKPanel.js:63` | active, cancelled, completed, draft | `spk_status` |
++| `pages/MaterialsPage.js:268` | in, out | `stock_movement` |
++
++**Akibat nyata**
++Menambah satu status baru di SSOT tidak memunculkannya di kedua belas layar ini. Label yang
++tampil juga tidak mengikuti Kamus Data, sehingga satu status bisa bernama berbeda di dua
++layar. `DocumentDialogs.js` bahkan **kehilangan dua pilihan** yang ada di SSOT (`notary`,
++`witness`) — peran penandatangan itu tidak bisa dipilih sama sekali dari layar.
++
++**Cara membuktikan**
++Tambahkan satu opsi baru pada grup `po_status` di `reference_p*.py`, lalu buka layar
++Pengadaan — opsi itu tidak muncul di filter.
++
++---
++
++## CFG-04 — Gate `audit_forms_deep` melaporkan hijau untuk masalah CFG-03
++
++**Tingkat:** SEDANG · **Status:** TERBUKTI DARI KODE
++
++**Bukti**
++`scripts/audit_forms_deep.py` memeriksa elemen `<Input>` untuk nilai enum, tetapi tidak
++memeriksa `<SelectItem value="literal">`. Hasil menjalankannya pada commit ini:
++
++```
++E1 — Harus dropdown (BLOCKING): 0
++```
++
++Padahal ada 105 `<SelectItem value="literal">` di 46 berkas, 12 di antaranya menduplikasi
++grup SSOT yang sudah ada.
++
++**Akibat nyata**
++Gate memberi rasa aman yang keliru. Selama gate hijau, tidak ada yang mencari masalah ini.
++Ini titik buta yang sama jenisnya dengan yang membuat lubang-lubang lain lolos.
++
++---
++
++## CFG-05 — Pembuatan index tersebar di sembilan modul
++
++**Tingkat:** RENDAH · **Status:** TERBUKTI DARI KODE
++
++`ensure_indexes` didefinisikan di `backend/indexes.py` **dan** di delapan modul lain
++(`opname.py:540`, `doc_share.py:216`, `warning_letters.py:167`, `build_calendar.py:329`,
++`migrations_p46.py:41`, `rab_engine.py:392`, dan lainnya). Tidak ada satu tempat yang bisa
++dibaca untuk menjawab "index apa saja yang dimiliki sistem ini".
++
++---
++
++# D. KEUANGAN & KARTU KPI
++
++## FIN-01 — Kartu piutang dan rincian di baliknya dihitung dari sumber berbeda
++
++**Tingkat:** TINGGI · **Status:** TERBUKTI DARI KODE, SELISIH PERLU DIUKUR
++
++**Bukti**
++```
++KARTU:     backend/finance_engine.py:767  "ar_outstanding": ar["total"]
++           ar_aging(): db.ar_invoices.find({"org_id": org_id})           ← TANPA filter status
++                       total dari  it["amount"] - it["paid_amount"]      ← level ITEM
++RINCIAN:   backend/finance_drilldown.py:62  find({"status": {"$ne": "paid"}})  ← DENGAN filter
++                       nilai dari  inv["outstanding"]                    ← level INVOICE
++```
++
++**Apa yang terjadi**
++Angka kartu dan daftar baris penyusunnya berasal dari dua query berbeda dan dua field berbeda.
++
++**Akibat nyata**
++Aturan yang ditulis sendiri oleh proyek ini ("angka kartu = jumlah baris rinciannya",
++`memory/PRD.md`, Fase 92) tidak dijamin oleh kode. Kartu menyertakan invoice berstatus
++`paid`; rinciannya tidak. Kartu menjumlah dari item; rincian membaca field denormalisasi
++`outstanding` pada invoice. Begitu keduanya bergeser, pemakai melihat kartu "Rp 4,2 M" lalu
++mengklik dan menemukan daftar yang berjumlah lain — tanpa penjelasan mana yang benar.
++
++**Cara membuktikan**
++```python
++kartu = (await finance_engine.dashboard(org))["ar_outstanding"]
++rows  = (await finance_drilldown.drilldown(org, "ar_outstanding"))["rows"]
++print(kartu, sum(r["amount"] for r in rows))   # bandingkan
++```
++Jalankan pada data produksi, bukan data seed.
++
++---
++
++## FIN-02 — Batas 2000 dokumen memotong angka tanpa memberi tahu
++
++**Tingkat:** SEDANG · **Status:** TERBUKTI DARI KODE
++
++```
++backend/finance_engine.py   ar_aging(): .to_list(2000)
++backend/finance_drilldown.py:62          .to_list(2000)
++backend/wa_reminder_engine.py:202        .to_list(2000)
++```
++
++Setelah invoice ke-2001, kartu piutang, aging, dan kandidat pengingat **diam-diam berhenti
++menghitung**. Tidak ada peringatan, tidak ada indikator "data terpotong". Angkanya akan
++terlihat wajar, hanya salah.
++
++---
++
++## FIN-03 — "DSO" bukan DSO
++
++**Tingkat:** SEDANG · **Status:** TERBUKTI DARI KODE
++
++```
++backend/finance_engine.py   dso = round(agg["total"] / max(total_value, 1) * 90)
++```
++
++Days Sales Outstanding yang sebenarnya adalah `(piutang / penjualan kredit periode) × jumlah
++hari periode`. Rumus di sini membagi sisa piutang dengan **nilai seluruh invoice sepanjang
++masa**, lalu mengalikan konstanta 90. Hasilnya adalah persentase piutang tertagih dikali 90 —
++bukan jumlah hari, dan tidak bisa dibandingkan dengan DSO industri mana pun.
++
++Angka ini tampil sebagai indikator keuangan kepada pemilik usaha.
++
++---
++
++# E. UI
++
++## UI-01 — Empat elemen berulang tanpa pembeda baris
++
++**Tingkat:** SEDANG · **Status:** TERBUKTI (gate repo sendiri)
++
++Hasil `python3 scripts/ux_audit.py`:
++```
++frontend/src/components/pricing/AllinSchemeField.js:95   data-testid='allin-manual-code'
++frontend/src/pages/AdminUsers.js:189                     data-testid='user-role-badge'
++frontend/src/pages/AdminUsers.js:201                     data-testid='user-edit-btn'
++frontend/src/pages/AdminUsers.js:204                     data-testid='user-toggle-btn'
++UX AUDIT FAILED: 4 error, 5 warn
++```
++Gate ini **sedang merah** pada commit ini.
++
++---
++
++## UI-02 — Enam route tanpa entri navigasi
++
++**Tingkat:** SEDANG · **Status:** TERBUKTI (gate repo sendiri)
++
++`/data-deletion`, `/privacy`, `/terms`, `/portal/*`, `/showroom/:token`,
++`/site-plan/studio/:projectId`. Sebagian memang sengaja (portal & showroom publik), tetapi
++`/data-deletion`, `/privacy`, dan `/terms` adalah halaman wajib kepatuhan yang tidak bisa
++dicapai dari mana pun di dalam aplikasi.
++
++---
++
++# F. YANG BELUM DIAUDIT
++
++Supaya tidak ada yang mengira dokumen ini lengkap:
++
++| Area | Status |
++|---|---|
++| BI & Analitik (`analytics_engine.py`, `build_analytics.py`, `ads_report.py`) | **Belum ditelusuri rumus per metrik.** Baru dipastikan tidak ada data mock/random. |
++| Akuntansi & GL (neraca, laba rugi, arus kas, tutup buku) | **Belum diverifikasi angkanya.** Baru diperiksa jalur periode (CFG-01, CFG-02). |
++| Konstruksi, pengadaan, subkon | Belum diaudit |
++| Portal pembeli | Belum diaudit |
++| Kartu KPI selain keuangan (Beranda, Lead, Pembangunan, Marketing) | Belum dibandingkan dengan drilldown-nya |
++| Keamanan (RBAC, permukaan auth) | Belum diaudit pada repo ini |
++| UI visual (tata letak, konsistensi, responsif) | Belum diperiksa — perlu dijalankan dan dilihat |
++
++Empat area pertama adalah tempat paling mungkin munculnya temuan setingkat WA-02 dan DOC-01,
++karena keduanya lahir dari pola yang sama: **nama field yang salah pada objek yang bentuknya
++mirip**. Pola itu belum disapu ke seluruh repo.
+-- 
+2.43.0
+
+
+From b02623f09c8505111cac3a1f4c1d4ac0a24aa648 Mon Sep 17 00:00:00 2001
+From: Yoga <pk.yogaswastika@gmail.com>
+Date: Sun, 6 Sep 2026 15:55:34 +0000
+Subject: [PATCH 2/2] =?UTF-8?q?docs(audit):=20sintesis=20=E2=80=94=20akar?=
+ =?UTF-8?q?=20masalah,=20keputusan=20produk,=20rencana=20bertahap?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Menjawab tiga pertanyaan pemilik dan menambah 9 temuan baru.
+
+Jawaban:
+- Chat bebas ke pembeli BISA, di dalam jendela 24 jam yang dibuka oleh
+  pesan MASUK pembeli (wa_inbound.py:149). Template hanya untuk MEMULAI
+  percakapan dan pengingat otomatis. SIPRO sudah menerapkan ini benar.
+- INVALID_FORMAT: payload pengajuan tidak menyertakan example.body_text
+  (wa_templates_meta.py:48). Dibuktikan dari layar sendiri — satu-satunya
+  template yang lolos (price_info) adalah satu-satunya yang tanpa variabel.
+- "Duplikasi" template: kedua layar membaca endpoint yang SAMA
+  (/wa-templates). Yang berbeda kolom status: Pusat Konfigurasi memakai
+  meta_status, Lead WA memakai status lokal — dan TemplatesPanel.js:101
+  merender apa pun yang bukan approved sebagai "Menunggu", sehingga
+  template DITOLAK Meta tampil sebagai menunggu persetujuan.
+
+Temuan baru: WA-12 (status berbohong), WA-13 (example hilang), WA-14
+(isi template terpisah dari tempat persetujuan), RBAC-01 (ALL_ROLES
+hardcoded, tidak ada endpoint membuat peran), RBAC-02 (aksi tanpa
+ACTION_META — view_all/override tampil sebagai token teknis), RBAC-03,
+PRJ-01 (progres proyek dibagi jumlah unit BERJADWAL, bukan total unit),
+PRJ-02 (dua definisi progres), BI-01 (sumber lead terbaik tanpa sampel
+minimum), BI-02 (dua definisi win rate).
+
+Akar masalah diringkas jadi 3 pola: aturan di docstring tidak ditegakkan
+kode; nama field salah pada objek serupa; satu konsep di banyak tempat
+tanpa kebenaran tunggal. Tahap 7 rencana menutup ketiganya dengan gate.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_0123q1hRQ5paMwo2sBAr22XX
+---
+ memory/AUDIT_SINTESIS.md | 369 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 369 insertions(+)
+ create mode 100644 memory/AUDIT_SINTESIS.md
+
+diff --git a/memory/AUDIT_SINTESIS.md b/memory/AUDIT_SINTESIS.md
+new file mode 100644
+index 0000000..e3182f4
+--- /dev/null
++++ b/memory/AUDIT_SINTESIS.md
+@@ -0,0 +1,369 @@
++# Sintesis Audit SIPRO — akar masalah, keputusan, dan rencana
++
++Disusun 6 September 2026 terhadap commit `7da1bd5`.
++Menyatukan `AUDIT_TEMUAN.md` (23 temuan) + temuan sesi lanjutan.
++Dokumen ini menggantikan urutan batch di `AUDIT_INSTRUKSI_PERBAIKAN.md`.
++
++---
++
++# BAGIAN 1 — Jawaban langsung atas tiga pertanyaan
++
++## 1.1 "Apakah saya tidak bisa chat langsung (bukan template) ke customer via WA API?"
++
++**Bisa. Tapi hanya di dalam jendela 24 jam, dan jendela itu hanya dibuka oleh PEMBELI.**
++
++Ini aturan Meta, bukan batasan SIPRO. Bentuknya:
++
++| Keadaan | Boleh kirim apa |
++|---|---|
++| Pembeli mengirim pesan ke nomor Anda | Jendela 24 jam **terbuka**. Bebas: teks, gambar, dokumen, suara, tanpa template, tanpa persetujuan Meta, **tanpa biaya per pesan**. |
++| 24 jam lewat sejak pesan terakhir pembeli | Jendela **tertutup**. Hanya template `APPROVED` yang bisa dikirim, dan ditagih per pesan. |
++| Anda ingin memulai percakapan lebih dulu | Wajib template `APPROVED`. Setelah pembeli **membalas**, jendela terbuka dan Anda bebas mengetik. |
++
++**Yang sering disalahpahami:** mengirim template **tidak** membuka jendela. Yang membuka
++jendela adalah **balasan pembeli**. Jadi alurnya selalu: template → pembeli membalas →
++jendela terbuka → chat bebas 24 jam.
++
++SIPRO sudah menerapkan ini dengan benar:
++
++```
++backend/wa_inbound.py:149          pesan MASUK -> window_expires_at = sekarang + 24 jam
++backend/routers/inbox_router.py:27 _window_open()
++backend/wa_compliance.py:153-158   teks bebas + jendela tertutup -> tolak #131047 (live)
++backend/routers/inbox_router.py:118  jalur kirim TEKS BEBAS: gw.send(..., kind="inbox", body=...)
++backend/routers/wa_router.py:258     jalur kirim teks bebas dari layar kontak WA
++```
++
++**Kesimpulan praktis:** sales Anda tetap bisa mengobrol normal dengan pembeli lewat SIPRO.
++Template hanya dibutuhkan untuk **memulai** percakapan dan untuk **pengingat otomatis**
++(tagihan, garansi, booking fee) — karena pengingat selalu terjadi saat jendela tertutup.
++
++Jadi: template bukan penjara. Template adalah pintu masuk. Setelah pintu terbuka, ruangannya
++bebas.
++
++---
++
++## 1.2 "Kenapa template ditolak INVALID_FORMAT?"
++
++**Karena payload pengajuan tidak menyertakan contoh nilai variabel (`example`).**
++
++Meta mewajibkan: setiap template yang body-nya memuat variabel `{{1}}` harus mengirim contoh
++nilai untuk tiap variabel. Tanpa itu, template ditolak `INVALID_FORMAT`.
++
++Payload yang dikirim SIPRO sekarang (`backend/wa_templates_meta.py:48`):
++
++```python
++comps.append({"type": "BODY", "text": to_meta_body(template.get("body", ""), template.get("variables"))})
++```
++
++Yang Meta harapkan:
++
++```json
++{"type": "BODY",
++ "text": "Halo {{1}}, tagihan {{2}} jatuh tempo {{3}}.",
++ "example": {"body_text": [["Budi Santoso", "Termin 2", "15 Oktober 2026"]]}}
++```
++
++**Bukti bahwa ini penyebabnya ada di layar Anda sendiri.** Dari tangkapan layar Template Meta:
++
++| Template | Punya variabel? | Hasil |
++|---|---|---|
++| Info Harga (`price_info`) | **Tidak** | ✅ Menunggu review Meta |
++| Pengingat Pembayaran | Ya (`{{nama}}`) | ❌ Ditolak Meta |
++| Promo Cluster | Ya (`{{nama}}`) | ❌ Ditolak Meta |
++| Pengingat Survey | Ya (`{{name}}`, `{{date}}`) | ❌ Ditolak — **INVALID_FORMAT** |
++| Aktivasi Ulang | Ya (`{{nama}}`) | ❌ Ditolak Meta |
++| Sapaan Awal | Ya (`{{name}}`) | ❌ Ditolak Meta |
++
++**Satu-satunya template yang lolos adalah satu-satunya template tanpa variabel.** Polanya
++tidak bisa lebih jelas dari itu.
++
++Perbaikannya kecil: `meta_components()` menyertakan `example.body_text` yang diambil dari
++contoh nilai per variabel. Karena itu berarti setiap variabel harus punya contoh, ini
++sekaligus memaksa perbaikan WA-04 (validasi body ↔ variables) — dua masalah, satu pekerjaan.
++
++**Catatan:** ada kemungkinan kedua yang harus diverifikasi bersamaan — header bertipe `text`
++yang memuat variabel juga butuh `example.header_text`, dan template berkategori
++`AUTHENTICATION` punya aturan komponen tersendiri. Minta agen membaca pesan `rejected_reason`
++lengkap dari Meta untuk masing-masing template sebelum memperbaiki, jangan hanya percaya
++analisis ini.
++
++---
++
++## 1.3 "Kenapa template di Pusat Konfigurasi berbeda dengan yang di menu Lead WA?"
++
++**Datanya sama persis. Yang berbeda adalah apa yang ditampilkan — dan salah satunya berbohong.**
++
++Kedua layar membaca koleksi yang sama lewat endpoint yang sama:
++
++```
++frontend/src/components/omni/TemplatesPanel.js:39         api.get("/wa-templates")
++frontend/src/components/config/WaTemplateMetaPanel.js:30  api.get("/wa-templates")
++```
++
++Bedanya di kolom status:
++
++| Layar | Menampilkan | Sumber |
++|---|---|---|
++| **Pusat Konfigurasi › Template Meta** | Status resmi Meta | `t.meta_status` |
++| **Lead WA › Template** | Status lokal | `t.status` |
++
++Dan inilah cacatnya (`TemplatesPanel.js:101`):
++
++```jsx
++<StatusPill status={t.status === "approved" ? "approved" : "pending"} group="wa_template_status" />
++```
++
++**Apa pun yang bukan `approved` ditampilkan sebagai "Menunggu".** Template yang **DITOLAK
++Meta** muncul di layar Lead WA sebagai "Menunggu" — bukan "Ditolak".
++
++Jadi yang Anda alami itu nyata dan bisa dijelaskan: di satu layar template berstatus
++**Ditolak Meta**, di layar lain template yang sama berstatus **Menunggu**. Admin yang hanya
++membuka layar Lead WA akan menunggu persetujuan yang tidak akan pernah datang.
++
++**Ini bukan duplikasi data. Ini satu data dengan dua layar yang tidak sepakat.** Yang harus
++diperbaiki bukan "hapus salah satu", tetapi **satukan layarnya**.
++
++---
++
++# BAGIAN 2 — Akar masalah
++
++Dua puluh tiga temuan sebelumnya dan sembilan temuan baru sesi ini lahir dari **tiga pola**,
++bukan tiga puluh dua kesalahan terpisah. Memperbaiki polanya lebih murah daripada memperbaiki
++gejalanya satu per satu.
++
++## Pola A — Aturan ditulis di docstring, tidak ditegakkan di kode
++
++Modulnya menuliskan janji yang benar. Lapisan di bawahnya membatalkannya karena satu
++kesalahan kecil.
++
++| Janji tertulis | Yang membatalkannya |
++|---|---|
++| `wa_reminder_engine.py:26` "Tidak mengingatkan hal yang sudah beres: termin lunas" | baris 206 membaca `paid` — item menyimpan `paid_amount`. Penjaga tidak pernah aktif. |
++| PRD Fase 92 "angka kartu = jumlah baris rinciannya" | kartu dan rincian memakai query dan field berbeda (FIN-01) |
++| `wa_compliance.py:3` "menolak kategori MARKETING" | dua template promosi diberi kategori `utility`, jadi lolos (WA-07) |
++| `doc_layout.py:20` "Tidak ada gaya mati di kode" | invoice memakai layout milik jenis dokumen lain, dan tidak punya entri sendiri (DOC-02) |
++
++**Konsekuensinya:** membaca kode ini memberi rasa aman yang keliru. Docstring-nya bagus, jadi
++pembaca berhenti memeriksa.
++
++## Pola B — Nama field yang salah pada objek yang bentuknya mirip
++
++Item termin menyimpan `paid_amount`; invoice menyimpan `paid`. Keduanya dict dengan field
++`amount` dan `status`, jadi kekeliruan tidak menimbulkan galat — hanya angka nol yang diam.
++
++Sudah menghasilkan dua cacat besar (WA-02, DOC-01). Sapuan saya hanya mencakup satu pasangan
++field. **Pasangan lain belum disapu sama sekali.**
++
++## Pola C — Satu konsep, banyak tempat, tidak ada yang jadi kebenaran
++
++| Konsep | Berapa tempat | Akibat |
++|---|---|---|
++| Status template WA | 2 layar, 2 field (`status` vs `meta_status`) | Layar tidak sepakat (§1.3) |
++| Periode akuntansi | 4 salinan `period_of`, 2 perilaku | Penentuan periode tidak deterministik (CFG-01) |
++| Progres proyek | `construction_progress` (berbobot fase) vs `units_progress` (rata-rata unit) | Dua angka "progres" yang berbeda definisi (PRJ-02 di bawah) |
++| Win rate | LED-07 `won/(won+lost)` vs LED-13 `won/total` | Dua angka win rate yang tidak sebanding (BI-02 di bawah) |
++| Kosakata enum | SSOT + 12 layar yang menuliskannya sendiri | Menambah status di SSOT tidak muncul di layar (CFG-03) |
++
++---
++
++# BAGIAN 3 — Temuan baru sesi ini
++
++## WA-12 — Layar Lead WA menampilkan template DITOLAK sebagai "Menunggu"
++
++**KRITIS** · `frontend/src/components/omni/TemplatesPanel.js:101`
++Mekanisme dan bukti: §1.3 di atas. Admin menunggu persetujuan yang sudah ditolak.
++
++## WA-13 — Pengajuan template tanpa `example` → ditolak INVALID_FORMAT
++
++**KRITIS** · `backend/wa_templates_meta.py:48`
++Mekanisme dan bukti: §1.2 di atas. **Selama ini belum diperbaiki, tidak ada satu pun template
++bervariabel yang bisa disetujui Meta — artinya seluruh pengingat otomatis tidak bisa hidup.**
++
++## WA-14 — Isi template tidak bisa diatur dari tempat ia disetujui
++
++**TINGGI** · Layar Pusat Konfigurasi hanya bisa **mengajukan** dan **menarik status**; isi
++template hanya bisa diubah di layar Lead WA. Sementara nilai bawaan pengingat
++(`reminder.template_*`) diatur di tab lain lagi. Tiga tempat untuk satu keputusan.
++
++## RBAC-01 — Peran baru tidak bisa dibuat sama sekali
++
++**TINGGI** · `backend/rbac.py:20-27`
++`ALL_ROLES` adalah daftar Python yang ditulis tangan. Tidak ada endpoint apa pun yang membuat
++peran (`admin_router.py` hanya punya `POST /users` dan `PUT /permissions`;
++`admin_router.py:86` sekadar mengembalikan `ALL_ROLES`).
++
++**Akibat:** menambah peran seperti "Admin Proyek" atau "Kasir" **membutuhkan perubahan kode
++dan deploy ulang.** Untuk produk yang menyebut dirinya multi-tenant dan SaaS-ready
++(`db.py:5`), ini batasan struktural, bukan kekurangan fitur kecil.
++
++## RBAC-02 — Kolom aksi tidak punya bahasa manusia sama sekali
++
++**TINGGI** · `backend/rbac_labels.py` (91 baris)
++Berkas itu memberi label manusiawi untuk **resource** (`coa` → "Bagan Akun") — bagian ini
++sudah benar dan dipakai UI. Tetapi **tidak ada `ACTION_META`**. Aksi tetap tampil sebagai
++token teknis Inggris:
++
++`view_all` · `view_own` · `create` · `update` · `approve` · `override` · `manage` ·
++`sign` · `verify` · `assign` · `cancel` · `delete`
++
++Admin non-teknis tidak bisa membedakan `view_all` dari `view_own`, atau `override` dari
++`approve` — padahal keduanya adalah keputusan wewenang yang serius.
++
++## RBAC-03 — Layar menampilkan kode mesin berdampingan dengan label
++
++**SEDANG** · `frontend/src/pages/AdminPermissions.js:307`
++```jsx
++<span className="font-mono">{c.resource}</span> ({labelOf(c.resource)}) · {roleLabel(c.role)}
++```
++Kode teknis ditampilkan lebih dulu dan lebih menonjol daripada namanya. Untuk layar yang
++dipakai pemilik usaha menentukan siapa boleh menyetujui pembayaran, ini terbalik.
++
++## PRJ-01 — Progres proyek mengecualikan unit yang belum dijadwalkan
++
++**TINGGI** · `backend/engine.py:224-226`
++```python
++scheds = await db.build_schedules.find({"org_id": org_id, "project_id": project_id}, ...)
++units_progress = round(sum(float(s.get("progress") or 0) for s in scheds) / len(scheds)) if scheds else 0
++```
++Pembaginya `len(scheds)` — **jumlah unit yang punya jadwal**, bukan jumlah unit proyek.
++
++**Akibat:** proyek 100 unit, 5 di antaranya dijadwalkan dan 80% jadi → kartu menampilkan
++**80% progres proyek**, padahal 95 unit belum disentuh. Angka ini naik justru karena unit
++lain belum dijadwalkan.
++
++Ditambah: rata-ratanya **tidak berbobot** — satu Tipe 36 selesai dihitung sama dengan satu
++Tipe 90 selesai.
++
++## PRJ-02 — Dua angka "progres proyek" dengan definisi berbeda
++
++**SEDANG** · `projects.construction_progress` (rata-rata fase berbobot, `engine.py:236`) dan
++`projects.units_progress` (rata-rata unit tak berbobot, baris 224). Keduanya tersimpan di
++dokumen yang sama dan keduanya tampil sebagai "progres" di layar berbeda. Tidak ada penjelasan
++mana yang mana.
++
++## BI-01 — "Sumber lead terbaik" bisa dimenangkan oleh sumber dengan satu lead
++
++**TINGGI** · `backend/metrics/leads.py:396-400`
++```python
++row["win_pct"] = pct(row["won"], row["value"])
++best = max((r for r in per_source.values() if r["win_pct"] is not None), key=lambda r: r["win_pct"])
++```
++Tidak ada batas sampel minimum. Sumber dengan **1 lead yang kebetulan closing** menghasilkan
++win rate 100% dan mengalahkan sumber dengan 300 lead di 42%.
++
++Metrik ini dipakai memutuskan ke mana anggaran iklan diarahkan.
++
++## BI-02 — Dua definisi "win rate" dalam satu modul
++
++**SEDANG** · `backend/metrics/leads.py`
++- LED-07 (baris 216-220): `won / (won + lost)` — lead berjalan tidak dihitung. Terdokumentasi.
++- LED-13 (baris 396): `won / total lead` — lead berjalan ikut jadi pembagi.
++
++Angka per sumber akan **selalu lebih kecil** daripada win rate keseluruhan, dan keduanya
++tampil dengan nama yang sama di layar berbeda. Pemakai akan menyimpulkan ada yang salah
++dengan datanya, padahal yang berbeda adalah definisinya.
++
++---
++
++# BAGIAN 4 — Keputusan yang harus Anda ambil (bukan keputusan teknis)
++
++Perbaikan di bawah bergantung pada jawaban Anda. Tanpa ini agen akan menebak.
++
++### K-1 · Satu layar template, di mana?
++Rekomendasi: **hapus tab template di Lead WA, pindahkan seluruhnya ke Pusat Konfigurasi ›
++Template Meta**, dan jadikan satu layar itu tempat mengatur isi, kategori, variabel, contoh
++nilai, pengajuan ke Meta, status, **dan** pemetaan "template mana untuk pengingat apa".
++Layar Lead WA cukup memilih template yang sudah `APPROVED`, tidak mengubahnya.
++
++Alasannya: template hanya berguna setelah disetujui Meta. Memisahkan "menulis isinya" dari
++"melihat apakah disetujui" adalah sumber kebingungan yang Anda alami.
++
++### K-2 · Peran dinamis atau tetap?
++Apakah Anda perlu membuat peran sendiri (mis. "Kasir", "Admin Proyek") tanpa bantuan
++developer? Kalau ya, ini pekerjaan tersendiri: peran menjadi data di koleksi, bukan konstanta
++Python, dan seluruh `ROLE_INHERITS` / `ROLE_GRANTS` / `ROLE_DENY` ikut berpindah.
++
++### K-3 · Bukti bayar (DOC-03)
++Apakah KWITANSI sudah memenuhi peran "bukti bayar", atau perlu dokumen terpisah per termin?
++
++### K-4 · Progres proyek yang mana yang benar?
++Untuk kartu "Progres konstruksi" di layar pemilik: berbobot nilai unit, berbobot fase, atau
++jumlah unit selesai / total unit? Ketiganya sah; yang tidak sah adalah menampilkan tiga-tiganya
++dengan nama yang sama.
++
++### K-5 · DSO (FIN-03)
++Hitung DSO yang benar, atau ganti namanya menjadi sesuatu yang jujur?
++
++---
++
++# BAGIAN 5 — Rencana kerja yang disintesis
++
++Menggantikan urutan batch di `AUDIT_INSTRUKSI_PERBAIKAN.md`. **Aturan verifikasi di dokumen
++itu tetap berlaku penuh: verifikasi dulu, perbaiki kemudian, laporkan yang tidak terbukti.**
++
++## Tahap 1 — Angka yang salah di mata pembeli
++`WA-02` · `DOC-01`
++Dua baris kode, dampak terbesar, paling mudah diverifikasi. Kerjakan lebih dulu untuk
++membuktikan dokumen audit ini layak dipercaya.
++
++## Tahap 2 — Buat WhatsApp benar-benar bisa hidup
++`WA-13` (example) → `WA-04` (validasi body↔variables) → `WA-01` (template per jenis pengingat)
++→ `WA-03` (riwayat jujur) → `WA-12` (status di layar Lead WA)
++
++Urutan ini tidak boleh dibalik. Tanpa WA-13, tidak ada template yang bisa disetujui, jadi
++WA-01 tidak bisa diuji. **Selama tahap ini belum selesai, mode WhatsApp tidak boleh diubah ke
++`live`.**
++
++## Tahap 3 — Satukan template (butuh keputusan K-1)
++`WA-14` · `WA-05` · `WA-06` · `WA-08` · `WA-09` · `WA-07`
++Satu layar, satu kebenaran: isi, kategori, variabel + contoh, status Meta, dan pemetaan ke
++pengingat. Template `APPROVED` dibekukan; perubahan berarti versi baru.
++
++## Tahap 4 — Bahasa dan wewenang (butuh keputusan K-2)
++`RBAC-02` (buat `ACTION_META` — ini yang paling cepat memberi manfaat) · `RBAC-03` ·
++`RBAC-01` (bila K-2 = ya)
++
++`ACTION_META` bisa dikerjakan dalam satu sesi dan langsung membuat layar Hak Akses bisa
++dipakai orang non-teknis. Kerjakan itu dulu, terlepas dari jawaban K-2.
++
++## Tahap 5 — Dokumen & konfigurasi
++`DOC-02` · `CFG-03` · `CFG-04` · `UI-01` · `UI-02` · `DOC-03` (bila K-3 = perlu)
++
++## Tahap 6 — Angka pembukuan & BI (butuh keputusan K-4, K-5)
++`CFG-01` · `CFG-02` · `FIN-01` · `FIN-02` · `FIN-03` · `PRJ-01` · `PRJ-02` · `BI-01` · `BI-02`
++
++Tahap ini mengubah angka historis. **Ukur dampaknya sebelum mengubah**, dan laporkan berapa
++jurnal/laporan yang berpindah sebelum menjalankan migrasi apa pun.
++
++## Tahap 7 — Cegah kelahiran ulang
++Ini yang paling bernilai jangka panjang:
++
++1. `memory/FIELD_MAP.md` — peta nama field uang per bentuk dokumen, plus gate
++   `verify_field_names.py` (menutup Pola B).
++2. `scripts/verify_card_drilldown.py` — angka kartu wajib sama dengan jumlah baris rinciannya
++   (menutup Pola A untuk KPI).
++3. Perluas `audit_forms_deep.py` ke `<SelectItem>` (CFG-04, menutup Pola C untuk kosakata).
++4. Satu gate yang memeriksa: setiap metrik BI punya `formula` tertulis, dan dua metrik dengan
++   nama mirip tidak boleh punya formula berbeda tanpa nama yang membedakannya (menutup
++   Pola C untuk angka).
++
++---
++
++# BAGIAN 6 — Yang masih belum diaudit
++
++Supaya tidak ada yang mengira gambarannya sudah utuh:
++
++| Area | Status |
++|---|---|
++| Akuntansi & GL — neraca, laba rugi, arus kas, tutup buku, e-Faktur, e-Bupot | **Belum diverifikasi angkanya.** Baru jalur periode. |
++| Metrik BI selain lead & proyek (marketing, sales, budget, pricing, rab, team) | Belum ditelusuri rumusnya satu per satu |
++| Pengadaan, subkon, 3-way match, retensi | Belum diaudit |
++| Portal pembeli | Belum diaudit |
++| Kartu KPI Beranda, Pembangunan, Marketing vs drilldown-nya | Belum dibandingkan |
++| Keamanan & permukaan auth pada repo ini | Belum diaudit |
++| UI visual — tata letak, konsistensi, responsif | Belum dilihat; perlu dijalankan |
++
++Berdasarkan tiga pola di Bagian 2, area yang paling mungkin menyimpan cacat setingkat WA-02
++adalah **akuntansi/GL** (banyak field uang dengan nama mirip) dan **kartu KPI yang belum
++dibandingkan dengan drilldown-nya** (Pola A sudah terbukti di FIN-01).
+-- 
+2.43.0
+

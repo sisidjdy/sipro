@@ -1,0 +1,23 @@
+{
+  "summary": "Iterasi 2 — audit Tahap 3-4 (SIPRO WA template governance + RBAC labels). Backend: 11/11 pytest PASS di /app/backend/tests/test_audit_tahap34b_wa_rbac.py — WA-05 (approved dari layar 400, pending 200), WA-06 tersirat lewat governance, WA-07 (peringatan promosi non-blokir, hilang saat kategori marketing), WA-08 (delete reminder_installment_due → 409 menyebut 'Pengingat'; delete welcome → 409 menyebut Playbook/Otomasi; list punya used_by[]+hints[]; welcome & price_info kategori marketing), WA-09 (nama duplikat POST kedua → 409 'sudah dipakai'), WA-14 (GET reminder-mapping = 5 baris installment_due/overdue/arrears_warning/warranty_expiring/booking_fee_due, semua missing=false; PUT kode tidak ada → 400; PUT template pending → 400; PUT installment_due→reminder_installment_overdue → 200 dan settings pengingat 'reminder.template_installment' ikut berubah; dikembalikan), RBAC-02 (action_meta lengkap untuk semua actions, label≠kode, view.weight=1, override.weight=3). Frontend: /config?tab=whatsapp&sub=templates menampilkan tabel wa-tmpl-studio dgn 12 baris meta, 5 baris pemetaan pengingat, tombol hapus TIDAK muncul untuk reminder_installment_due & welcome (yang dipakai), buat template promo utility → toast peringatan 'promosi' + toast sukses + baris muncul, ubah nama & simpan OK, hapus template baru OK (confirm-dialog). Kartu wa-tmpl-mapping-card: ubah select installment_due→reminder_installment_overdue → save aktif → sukses; dikembalikan. /automation?tab=templates: read-only (0 tombol new/edit/delete), tombol wa-tmpl-picker-link 'Kelola template' ada. /admin/permissions: legend admin-permissions-action-legend berisi 14 baris label ID; chip aksi memakai label manusia ('Lihat', 'Lihat semua', 'Terobos aturan'…) dg tag 'berat' untuk bobot 3; klik sel → editor menampilkan checkbox berlabel manusia + tag berat untuk aksi bobot 3; ubah 1 checkbox → admin-permissions-pending-row menampilkan label resource dulu ('Pipeline Lead leads · Manajer Sales: … → …') baru kode kecil; klik Kembalikan (reset) → suntingan dibatalkan.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_audit_tahap34b_wa_rbac.py",
+    "/app/test_reports/pytest/audit_p124.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "wa_template_governance.category_hints ekstrak kata 'promo' juga cocok dengan istilah netral seperti 'Promo Cluster' (nama template marketing yang sah). Untuk marketing tidak masalah (tidak memicu), tapi bila kelak template utility bernama misalnya 'Promo tenggat' user bingung — pertimbangkan menandai batas kata atau menerima daftar allowlist.",
+    "PUT /wa-templates/reminder-mapping menerima {mapping: {kind: code}} tanpa membatasi keys — sudah ditolak per-kind dengan pesan yang jelas (baik), tapi transaksi tidak atomik: bila key ke-2 gagal setelah key ke-1 sukses, settings ke-1 sudah tersimpan. Untuk 5 nilai kecil ini risikonya kecil, namun bisa ditingkatkan dengan validasi seluruh mapping dulu baru set_value.",
+    "OmnichannelPage rute sebenarnya /automation (bukan /omnichannel di spec) — perbarui dokumen atau tambah redirect (dicatat juga di iterasi 1)."
+  ],
+  "updated_files": ["/app/backend/tests/test_audit_tahap34b_wa_rbac.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "superadmin@sipro.co.id / Sipro#2026",
+  "seed_data_creation": "Test membuat template sementara dengan prefiks TEST* dan menghapusnya di teardown; pemetaan installment_due sempat diubah lalu dikembalikan ke reminder_installment_due. UI test juga membuat template 'TESTuipromo…' dan menghapusnya sebelum keluar. Tidak ada sisa data uji.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Route Automasi & Channel = /automation (bukan /omnichannel). BASE_URL untuk pytest wajib di-export via REACT_APP_BACKEND_URL (default fallback di conftest bisa basi). Body template WA memakai format {{var}} (double-brace) — validate_variables menolak {var}. Untuk pending row admin permissions, format text = 'ResourceLabel resourceCode · RoleLabel: <old_labels> → <new_labels>' (label resource dulu baru kode, sesuai spec).",
+  "rca of the issue": "Tidak ada bug utama; iterasi ini murni verifikasi fitur baru."
+}

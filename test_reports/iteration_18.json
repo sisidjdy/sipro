@@ -1,0 +1,75 @@
+{
+  "summary": "Iter 18: Verified booking all-in promo pricing, AR breakdown/cost invoices, contract breakdown, force delete deal, receipt delete, ReserveDialog, DealsListTab delete button, SPK from RAB dialog (unit + add-on badge). 6/6 backend pytests pass; all frontend flows verified.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iter18_booking_allin.py",
+    "/app/test_reports/pytest/iter18.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "GET /api/finance/ar/{deal_id} returns receipts as a SIBLING to `data` (top-level), not nested inside data — non-obvious API shape; documented for future testing agents.",
+    "DELETE /api/finance/ar/receipts/{rid} without trailing slash returns 307 redirect when reason missing (FastAPI trailing-slash behavior); after redirect it validates and returns 400. Cosmetic only."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter18_booking_allin.py"
+  ],
+  "success_rate": {"backend": "100% (6/6)", "frontend": "100%"},
+  "test_credentials": "owner@sipro.co.id / manager@sipro.co.id / finance@sipro.co.id — password Sipro#2026",
+  "seed_data_creation": "Two throwaway booked deals created during backend tests (units A-05 & B-03/others from available pool) — force-deleted in teardown; unit statuses restored to available. No permanent seed changes.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Login response: token is at top-level `access_token` (not inside data). AR detail endpoint returns receipts and cost_invoices at top-level next to data. DealsListTab lives at /deals under the 'Deal' tab (default tab is 'Unit'). ReserveDialog opens from /leads/<id> → tab Unit → 'Buat Reservasi'. SPK dialog uses data-testid 'spk-rab-dialog' with 'spk-rab-project', 'spk-rab-unit', 'spk-rab-unit-check', 'spk-unit-addons' badges. Available units seed count fluctuates as tests create/delete deals.",
+  "detailed_findings": {
+    "backend_simulate": {
+      "gross_price": "base + 18,500,000 (add-on)",
+      "cost_discount_amount": 27000000,
+      "BPHTB_component_discount": 27000000,
+      "by_target_cost_star": 27000000,
+      "payment_breakdown_rows": ["UNIT_PRICE","ADDON:ADD-DAPUR","GROSS_PRICE","NET_PRICE","COST:BPHTB","COSTDISC:BPHTB","COST:NOTARY_FEE","COST_TOTAL","TOTAL","BOOKING_FEE","AFTER_BOOKING_FEE"]
+    },
+    "backend_full_flow": {
+      "reserve→pay BF→book→convert": "OK",
+      "GET /api/finance/ar/{id}": "breakdown.cost_discount=27jt, buyer_total = net_price + cost_total; cost_invoices[0] = INB with BPHTB(disc 27jt) + NOTARY_FEE",
+      "GET /api/finance/ar list": "row includes cost_total, cost_outstanding, buyer_total, cost_invoice_numbers",
+      "contract breakdown rows": "UNIT_PRICE, ADDON_SPEC 18.5jt, PROMO_DISCOUNT (0), BOOKING_FEE, BPHTB (net), NOTARY_FEE, COST_DISCOUNT 27jt; total_bill = nett_price + costs_total",
+      "costs-ledger": "invoices=1, uninvoiced=0 after convert"
+    },
+    "backend_force_delete": {
+      "GET /deals/{id}/delete-check": "can_force=true; blockers include ar_invoices, receipts, booking_fee_invoices, cost_invoices, contracts",
+      "manager DELETE": "403",
+      "no-reason DELETE": "400",
+      "short-reason (<10)": "400",
+      "owner DELETE with reason": "200, removed includes ar_invoices/receipts/booking_fee_invoices/cost_invoices/contracts/journal_entries; unit becomes available"
+    },
+    "backend_receipt_delete": {
+      "POST /finance/ar/receipts": "creates AR receipt",
+      "DELETE /finance/ar/receipts/{rid}?reason=<long>": "200, AR paid decremented",
+      "short reason": "400"
+    },
+    "frontend_finance": {
+      "ar-buyer-total": "7 rows",
+      "ar-cost-outstanding": "3 rows (deals with all-in cost invoices)",
+      "detail sheet": "ar-payment-breakdown (11 rows), ar-cost-invoices (1 INB row)",
+      "receipt delete": "ar-receipt-delete-btn present (2), dialog + reason textarea + confirm button; short reason keeps confirm disabled, ≥10 chars enables"
+    },
+    "frontend_deal_delete": {
+      "location": "/deals → 'Deal' tab",
+      "deal-delete-btn count": 7,
+      "dialog": "shows 10 blocker rows (ar_invoices, receipts, booking_fee_invoices, customer_deposits, contract_liabilities, tax_records, commissions, cost_invoices, contracts, journal_entries)",
+      "reason validation": "confirm disabled for short reason, enabled for ≥10 chars"
+    },
+    "frontend_reserve_dialog": {
+      "opened from /leads/<id> → Buat Reservasi": "OK",
+      "reserve-dialog visible": true,
+      "sections": "Unit Tersedia, Skema pembayaran, Add-on, BIAYA TRANSAKSI — SKEMA ALL-IN, Skema diskon, Promo, Kode kupon, Simulasi KPR, Booking fee, 'Hitung rincian harga' button"
+    },
+    "frontend_spk_dialog": {
+      "spk-rab-dialog opens from procurement-spk-add-btn": true,
+      "unit rows": 18,
+      "add-on badges (spk-unit-addons)": 3,
+      "SPK bebas (tanpa unit) button": "present"
+    }
+  },
+  "rca of the issue": "No issues found. All backend fixes (payment_breakdown for all-in EXCLUDE scheme, AR breakdown with buyer_total/cost_components, INB cost invoices per booking, force delete cascade, receipt delete) and frontend components (ArPanel, ArDetailSheet, DealsListTab with DeleteEntityButton force delete, SpkFromRabDialog) work as specified."
+}

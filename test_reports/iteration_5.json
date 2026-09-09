@@ -1,0 +1,84 @@
+{
+  "summary": "Iterasi 5: verifikasi ulang backend+frontend fitur rich editor dokumen, preview PDF, all-in dialog desktop/mobile, RBAC edit script/layout, dan rerun 4 test audit wajib. Backend mayoritas hijau; ada 1 gap requirement jumlah target doc-layout (<24). UI inti jalan, namun ada warning console berulang (WebSocket notifikasi dan warning nilai input/chart).",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "/api/doc-layouts",
+        "issue": "Mengembalikan 23 target dokumen, belum memenuhi requirement audit '24+ registered/custom targets'. Semua target yang ada berhasil preview PDF (200), tetapi kuantitas belum sesuai ekspektasi.",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "ConfigCenter / All-in tab",
+        "issue": "Di mobile 390, tabel komponen biaya transaksi pada bagian atas terlihat terlalu rapat/terpotong (indikasi overflow/stacking visual), meski dialog edit ALLIN_STD/EXCLUDE sendiri fit viewport.",
+        "selector": "[data-testid=\"config-tab-allin\"]",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Realtime notifications websocket",
+        "issue": "Console warning berulang di banyak route: WebSocket /api/ws/notifications closed before connection established.",
+        "affected_selectors": []
+      },
+      {
+        "flow": "Config forms rendering",
+        "issue": "Console warning berulang di /config: 'The specified value ... cannot be parsed, or is out of range.' (nilai string non-numerik/non-time terpasang ke input tertentu).",
+        "affected_selectors": [
+          "[data-testid=\"config-tab-allin\"]"
+        ]
+      }
+    ],
+    "design_issues": [
+      {
+        "screen": "/finance",
+        "issues": [
+          "Console warning Recharts width/height -1 saat render awal (layout container chart belum stabil pada mount)."
+        ]
+      },
+      {
+        "screen": "/site-plan",
+        "issues": [
+          "Tidak dapat verifikasi hadap Tenggara di UnitQuickCard karena proyek terpilih tidak punya kavling (0/0), sehingga quick-card unit tidak muncul."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_audit_tahap5_doc_cfg_ui.py",
+    "/app/backend/tests/test_audit_tahap6_angka.py",
+    "/app/backend/tests/test_audit_tahap12_tahapan.py",
+    "/app/backend/tests/test_doc_p66.py",
+    "/app/backend/tests/test_iter5_doc_editor_backend.py",
+    "/app/test_reports/pytest/iteration5_backend.xml",
+    "/app/test_reports/pytest/iteration5_regression.xml"
+  ],
+  "action_items": [
+    "Investigasi gap jumlah target /api/doc-layouts agar memenuhi klaim 24+ (cek TARGETS + custom script/layout discovery).",
+    "Perbaiki stabilitas koneksi websocket notifikasi (/api/ws/notifications) agar warning tidak berulang di console.",
+    "Audit field input di /config yang menerima value tidak sesuai tipe (pemicu warning 'cannot be parsed/out of range').",
+    "Sediakan/siapkan minimal satu data unit aktif di /site-plan untuk verifikasi visual hadap Tenggara di quick card."
+  ],
+  "critical_code_review_comments": [
+    "backend/tests/conftest.py masih memiliki fallback localhost default URL; ini berpotensi menyamarkan salah konfigurasi env (tidak fail-fast).",
+    "Rich editor table move memunculkan warning ProseMirror 'TextSelection endpoint not pointing into a node with inline content (tableHeader)' saat interaksi table-up/down; fungsi tetap jalan, tapi perlu hardening selection handling.",
+    "Semua endpoint preview /api/doc-layouts/{code}/preview untuk target yang terdaftar saat ini menghasilkan PDF 200 (tidak ada kegagalan per-code)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter5_doc_editor_backend.py"
+  ],
+  "success_rate": {
+    "backend": "97.9%",
+    "frontend": "78%"
+  },
+  "test_credentials": "superadmin@sipro.co.id / Sipro#2026; sales@sipro.co.id / Sipro#2026 (dibaca dari /app/memory/test_credentials.md)",
+  "seed_data_creation": "Tidak membuat seed permanen. Perubahan script SPR_KPR via UI diuji save+reload lalu dikembalikan ke konten awal pada sesi yang sama.",
+  "retest_needed": true,
+  "main_agent_can_self_test": false,
+  "context_for_next_testing_agent": "Rerun 4 file audit wajib: 43/43 PASS (iteration5_backend.xml). Regresi baru: 4 PASS, 1 FAIL (iteration5_regression.xml) dengan fail tunggal jumlah target doc-layout 23<24. Uji UI admin/master-data berhasil: rich editor alignment/list/table/placeholder, save-reload persistence, preview next/prev/download, lalu restore script asli. All-in dialog ALLIN_STD/EXCLUDE teruji desktop+mobile, bbox fit viewport dan no overlap pada field inti. Sales ke /admin/master-data ter-redirect ke beranda (RBAC deny by routing). Site plan tidak bisa verifikasi orientation karena data kavling kosong.",
+  "rca of the issue": "RCA utama temuan backend: ekspektasi audit mensyaratkan 24+ target dari /api/doc-layouts, namun list_targets saat ini hanya mengembalikan 23 baris (kombinasi TARGETS + custom). Ini bukan error render per target (preview semua 200), tetapi mismatch cakupan registry target. Repro: login admin -> GET /api/doc-layouts -> hitung len(data)=23. Mitigasi: validasi sumber TARGETS di backend/doc_layout.py dan cross-check apakah dokumen custom yang diharapkan belum tersimpan di document_templates/layouts pada org demo."
+}

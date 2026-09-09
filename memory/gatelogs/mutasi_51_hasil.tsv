@@ -1,0 +1,55 @@
+M01	TERTANGKAP	M01 gerbang retensi tidak lagi melihat klaim garansi sama sekali	reload 6s
+M02	TERTANGKAP	M02 penahanan tidak menyebut NOMOR klaimnya (kembali ke 'ada kendala')	reload 4s
+M03	TERTANGKAP	M03 daftar klaim penahan tidak dikirim ke layar (layar harus menebak)	reload 4s
+M04	TERTANGKAP	M04 status klaim dikirim sebagai enum mentah, bukan label Kamus Data	reload 4s
+M05	TERTANGKAP	M05 penahanan tidak lagi menandai sendiri apakah boleh diabaikan (SSOT hilang)	reload 4s
+M06	TERTANGKAP	M06 pengajuan pencairan tidak lagi memeriksa gerbang (klaim aktif dilewati)	reload 4s
+M07	TERTANGKAP	M07 siapa pun yang boleh mengajukan juga boleh MENGABAIKAN penahanan	reload 4s
+M08	TERTANGKAP	M08 alasan pengabaian < 10 huruf diterima (dua lapis dimatikan)	reload 4s
+M09	TERTANGKAP	M09 kode penahanan ASING bisa diabaikan (dua penyaring dimatikan)	reload 4s
+M10	TERTANGKAP	M10 penahanan yang TIDAK sedang menahan boleh diabaikan (pengabaian hantu)	reload 4s
+M11	TERTANGKAP	M11 jejak pengabaian tidak menyimpan siapa/kapan/kenapa	reload 4s
+M12	TERTANGKAP	M12 penahanan yang diabaikan disembunyikan dari layar (auditor kehilangan jejak)	reload 5s
+M13	TERTANGKAP	M13 izin pencairan dilonggarkan sampai PENGAJU bisa mencairkan sendiri	reload 5s
+M14	TERTANGKAP	M14 pemisahan tugas dimatikan: pengaju mencairkan sendiri dan BERHASIL	reload 4s
+M15	TERTANGKAP	M15 kiriman ulang pencairan tidak dikenali (tagihan AP kedua lahir)	reload 4s
+M16	TERTANGKAP	M16 retensi bisa dicairkan DUA KALI (penjaga status dimatikan)	reload 4s
+M17	TERTANGKAP	M17 klaim yang SUDAH DITUTUP tetap menahan retensi (uang subkon ditahan selamanya)	reload 4s
+M18	TERTANGKAP	M18 masa pemeliharaan yang belum dicatat ditulis '0 hari' (kebalikan artinya)	reload 4s
+M19	TERTANGKAP	M19 kode penahanan garansi dihapus dari Kamus Data (layar mengetik labelnya sendiri)	reload 4s
+M20	TERTANGKAP	M20 pengabaian tidak tercatat sebagai 'override' di jejak audit	reload 4s
+M21	TERTANGKAP	M21 pengabaian tidak melahirkan tugas penelaahan (hilang dari radar)	reload 4s
+M22	TERTANGKAP	M22 layar menebak sendiri penahanan mana yang boleh diabaikan (bukan dari server)	
+M23	TERTANGKAP	M23 mode kirim mengaku 'nyata' walau kredensial WhatsApp kosong	reload 6s
+M24	TERTANGKAP	M24 ambang termin memakai ANGKA MATI, bukan Pusat Konfigurasi	reload 5s
+M25	TERTANGKAP	M25 setelan tidak menyebut key Pusat Konfigurasi (layar jadi jalan buntu)	reload 5s
+M26	TERTANGKAP	M26 pengingat garansi hampir habis tidak pernah lahir dari BAST	reload 4s
+M27	TERTANGKAP	M27 pengingat termin jatuh tempo tidak pernah lahir	reload 5s
+M28	TERTANGKAP	M28 pengingat tunggakan tidak pernah lahir	reload 4s
+M29	TERTANGKAP	M29 jenis penerima tidak ditulis (pelanggan vs calon pembeli jadi rancu)	reload 5s
+M30	TERTANGKAP	M30 penanda dedup dibuat unik tiap jalan (satu periode bisa berkali-kali)	reload 4s
+M31	TERTANGKAP	M31 simulasi mengaku 'terkirim' (pesan tidak pergi tapi laporannya bilang pergi)	reload 6s
+M32	TERTANGKAP	M32 penerima tanpa nomor dianggap siap dikirim (sebabnya disembunyikan)	reload 5s
+M33	LOLOS	M33 termin yang sudah LUNAS tetap diingatkan	reload 4s
+M34	TERTANGKAP	M34 garansi yang masanya SUDAH LEWAT tetap diingatkan	reload 5s
+M35	TERTANGKAP	M35 siapa pun yang boleh MELIHAT pengingat juga boleh MENJALANKANNYA	reload 5s
+M36	TERTANGKAP	M36 riwayat tidak menyimpan template & isi pesan (kalimatnya tak bisa diperiksa)	reload 4s
+M37	TERTANGKAP	M37 riwayat tidak menyebut siapa yang menjalankan	reload 5s
+M38	TERTANGKAP	M38 ringkasan per status tidak dikirim (layar dipaksa menghitung sendiri)	reload 4s
+M39	TERTANGKAP	M39 label jenis pengingat diketik di layar, bukan dari Kamus Data	
+M40	TERTANGKAP	M40 BAST pembeli LAIN bisa diunduh (pemeriksaan kepemilikan dimatikan)	reload 6s
+M41	TERTANGKAP	M41 kwitansi orang lain bisa diunduh (daftar diambil tanpa saringan pemilik)	reload 4s
+M42	TERTANGKAP	M42 klaim garansi orang lain bisa dibuka & diakui pembeli ini	reload 4s
+M43	TERTANGKAP	M43 klaim yang belum diperiksa mutu bisa langsung ditutup atas pengakuan	reload 4s
+M44	TERTANGKAP	M44 'belum beres' tetap MENUTUP klaim (pengakuan negatif diabaikan)	reload 4s
+M45	TERTANGKAP	M45 catatan pembeli tidak disimpan (keluhannya hilang)	reload 4s
+M46	TERTANGKAP	M46 pengakuan dicatat atas nama STAF, bukan pembeli	reload 4s
+M47	TERTANGKAP	M47 tim tidak diberi tahu saat pembeli menyatakan perbaikan belum beres	reload 5s
+M48	TERTANGKAP	M48 daftar BAST kosong dikembalikan sebagai tabel hampa tanpa sebab	reload 4s
+M49	TERTANGKAP	M49 portal memakai tautan mentah <a href> untuk berkas (token bocor ke riwayat)	
+M50	TERTANGKAP	M50 layar tidak lagi menjelaskan akibat 'belum beres' (klaim tidak ditutup)	
+M51	LOLOS	M51 panel dokumen dilepas dari portal (BAST & kwitansi tak punya pintu)	
+M52	TERTANGKAP	M52 keunikan penanda pengingat hanya dijaga aplikasi (index unik dijatuhkan)	mutasi database
+M33	TERTANGKAP	M33 termin yang sudah LUNAS tetap diingatkan	reload 5s
+M51	TERTANGKAP	M51 panel dokumen dilepas dari portal (BAST & kwitansi tak punya pintu)	
+M31	TERTANGKAP	M31 simulasi mengaku 'terkirim' (pesan tidak pergi tapi laporannya bilang pergi)	reload 5s · 3 jejak pengingat dibuang

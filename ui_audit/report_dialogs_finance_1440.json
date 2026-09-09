@@ -1,0 +1,77 @@
+{
+ "role": "finance",
+ "base": "http://localhost:3000",
+ "dialogs": [
+  {
+   "page": "akuntansi",
+   "path": "/accounting",
+   "trigger": "peta menu baru (menu saya ke mana?)",
+   "testid": "nav-map-button",
+   "title": "Peta menu: lama → baru",
+   "dialog_bg": "rgb(243, 244, 247)",
+   "rect": {
+    "top": 68,
+    "bottom": 833,
+    "h": 765,
+    "vh": 900
+   },
+   "findings": [],
+   "console_errors": [],
+   "shot": "/app/ui_audit/dialogs/finance_1440/akuntansi_1_peta-menu-baru-(me.png"
+  },
+  {
+   "page": "keuangan",
+   "path": "/finance",
+   "trigger": "peta menu baru (menu saya ke mana?)",
+   "testid": "nav-map-button",
+   "title": "Peta menu: lama → baru",
+   "dialog_bg": "rgb(243, 244, 247)",
+   "rect": {
+    "top": 68,
+    "bottom": 833,
+    "h": 765,
+    "vh": 900
+   },
+   "findings": [],
+   "console_errors": [],
+   "shot": "/app/ui_audit/dialogs/finance_1440/keuangan_1_peta-menu-baru-(me.png"
+  },
+  {
+   "page": "kasbon",
+   "path": "/petty-cash",
+   "trigger": "peta menu baru (menu saya ke mana?)",
+   "testid": "nav-map-button",
+   "title": "Peta menu: lama → baru",
+   "dialog_bg": "rgb(243, 244, 247)",
+   "rect": {
+    "top": 68,
+    "bottom": 833,
+    "h": 765,
+    "vh": 900
+   },
+   "findings": [],
+   "console_errors": [],
+   "shot": "/app/ui_audit/dialogs/finance_1440/kasbon_1_peta-menu-baru-(me.png"
+  },
+  {
+   "page": "kasbon",
+   "path": "/petty-cash",
+   "trigger": "ajukan kas bon",
+   "testid": "petty-cash-request-button",
+   "title": "Ajukan Kas Bon",
+   "dialog_bg": "rgb(243, 244, 247)",
+   "rect": {
+    "top": 197,
+    "bottom": 703,
+    "h": 506,
+    "vh": 900
+   },
+   "findings": [],
+   "console_errors": [
+    "WebSocket connection to 'ws://localhost:443/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED"
+   ],
+   "shot": "/app/ui_audit/dialogs/finance_1440/kasbon_2_ajukan-kas-bon.png"
+  }
+ ],
+ "pages_scanned": 3
+}

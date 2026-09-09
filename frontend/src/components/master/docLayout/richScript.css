@@ -1,0 +1,14 @@
+.script-editor .document-prose { min-height: 320px; max-height: 560px; overflow: auto; padding: 20px; outline: none; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.document-prose p { margin: 0 0 8px; min-height: 1em; }
+.document-prose h1 { font-size: 22px; font-weight: 700; }
+.document-prose h2 { font-size: 18px; font-weight: 700; }
+.document-prose h3 { font-size: 15px; font-weight: 700; }
+.document-prose ul, .document-prose ol { padding-left: 24px; margin: 8px 0; }
+.document-prose ul { list-style: disc; }
+.document-prose ol { list-style: decimal; }
+.document-prose table { border-collapse: collapse; width: 100%; table-layout: fixed; margin: 12px 0; }
+.document-prose td, .document-prose th { border: 1px solid hsl(var(--border)); padding: 8px; min-width: 40px; position: relative; vertical-align: top; }
+.document-prose th { background: hsl(var(--muted)); font-weight: 600; }
+.document-prose .selectedCell { background: hsl(var(--accent)); }
+.document-prose blockquote { border-left: 3px solid hsl(var(--border)); padding-left: 16px; }
+.document-prose .ProseMirror-gapcursor { position: relative; }

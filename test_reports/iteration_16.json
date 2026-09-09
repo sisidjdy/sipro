@@ -1,0 +1,36 @@
+{
+  "summary": "Iteration 16 — Tested delete API + RBAC + appointment-location-follows-project. Backend: 9/10 tests pass. Frontend UI test-ids and behaviors all correctly wired (delete buttons on lead/customer/project pages, blocker dialog with 6 blockers on demo project, appointment dialog now shows lead-appt-project and prefills lead-appt-location as 'Kantor pemasaran <ProjectName> — <location>' instead of hardcoded 'Cluster Asri'). CRITICAL BUG FOUND: the DB-persisted RBAC matrix (used by require_permission) was NOT migrated after DEFAULT_PERMISSIONS gained `delete` for projects/units (project_manager) and customers (sales_manager). As a result, PM users get 403 deleting projects/units and sales_manager users get 403 deleting customers, even though DEFAULT_PERMISSIONS/rbac_matrix.py lists them. Leads (sales_manager delete) is fine because that entry was already persisted previously.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "GET /api/admin/permissions and DELETE /api/projects/{id}, /api/projects/{pid}/units/{uid}, /api/customers/{id}", "issue": "Persisted (effective) RBAC matrix missing `delete` for projects/units (project_manager) and customers (sales_manager). Direct API check confirmed: PM DELETE project -> 403; sales_manager DELETE customer -> 403. `defaults` block in response contains delete but `matrix`/`effective` doesn't. Root cause: DEFAULT_PERMISSIONS was updated in code but the stored rbac_matrix in Mongo was not migrated. Leads delete works because sales_manager:leads:delete was already persisted.", "priority": "CRITICAL"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter16_delete_rbac.py",
+    "/app/test_reports/pytest/iter16.xml"
+  ],
+  "action_items": [
+    "MIGRATE the persisted RBAC matrix in MongoDB: add `delete` to projects.project_manager, units.project_manager, customers.sales_manager. Options: (a) idempotent migration in startup that merges DEFAULT_PERMISSIONS into the stored matrix for missing (resource, role, action) tuples; (b) admin script; (c) reset stored matrix if safe. After migrating, re-run test_iter16_delete_rbac.py::TestPermissionsMatrix and verify PM can DELETE /api/projects/{id} and sales_manager can DELETE /api/customers/{id}.",
+    "Update review-request docs: demo project is 'Cluster Asri Blok A' (not 'Harmony Land 5'); no impact on code."
+  ],
+  "critical_code_review_comments": [
+    "The rbac_matrix system supports overrides via DB but has no migration when defaults grow. Any new resource/action added to DEFAULT_PERMISSIONS silently does NOT take effect for existing tenants — this is a systemic footgun. Recommend a startup routine that unions missing role→action grants from DEFAULT_PERMISSIONS into stored matrix (idempotent).",
+    "AppointmentDialog fix is clean; frontend/src/components/sales/AppointmentDialog.js line 15 builds `Kantor pemasaran ${p.name}${p.location ? ' — '+p.location : ''}` correctly."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter16_delete_rbac.py (new)"
+  ],
+  "success_rate": {"backend": "90%", "frontend": "100%"},
+  "test_credentials": "superadmin@sipro.co.id / Sipro#2026; sales@sipro.co.id; manager@sipro.co.id; pm@sipro.co.id — all Sipro#2026",
+  "seed_data_creation": "Test creates & deletes throwaway lead 'QA Hapus Lead' / 'QA RBAC Lead', customer 'QA Hapus Customer', project 'QA Hapus Proyek' (code QAHP<ts>). All cleaned up. One stale 'QA Hapus Proyek' from initial failed run was removed manually.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend suite: /app/backend/tests/test_iter16_delete_rbac.py — 10 tests, 9 passing. Only TestPermissionsMatrix::test_matrix_shows_delete_for_pm_and_sm fails, evidencing the RBAC-matrix-not-migrated bug. Direct PM/SM delete calls also return 403 (see below). Frontend: verified data-testid for lead-delete-btn/project-delete-btn/customer-delete-btn present as superadmin; sales does not see lead-delete-btn. lead-appt-project and lead-appt-location render; location is prefilled with 'Kantor pemasaran Cluster Asri Blok A — Bogor, Jawa Barat' (proves fix). Do not re-seed. After E1 migrates matrix, re-run pytest and additionally verify: (i) as pm@sipro.co.id, create project via SA with pm as member, then DELETE returns 200 without blockers; (ii) as manager@sipro.co.id, DELETE fresh customer returns 200.",
+  "rca of the issue": "Backend/rbac_matrix.py::DEFAULT_PERMISSIONS was extended to grant `delete` to project_manager for projects/units and sales_manager for customers. However `require_permission` reads the *stored* matrix (admin_router.get_permissions returns `matrix` from `await get_matrix()` and `effective` derived from it). The stored matrix in Mongo was seeded previously without those `delete` entries, and there is no startup merge/migration that unions new DEFAULT_PERMISSIONS grants into the stored matrix, so the new grants never take effect. Reproduction: login pm@sipro.co.id, DELETE /api/projects/{id} (project where pm is member) -> 403; login manager@sipro.co.id, DELETE /api/customers/{fresh_id} -> 403. Mitigation: add a startup step that, for each (resource, role, action) in DEFAULT_PERMISSIONS not already in stored matrix, appends it; run once per boot (idempotent). Alternatively, provide an admin 'reset defaults' or migration script."
+}

@@ -1,0 +1,38 @@
+M01	TERTANGKAP	M01 pemuat panel kembali ke Promise.all (satu penolakan membatalkan semuanya)	
+M02	TERTANGKAP	M02 pesan penegak izin backend diteruskan apa adanya ke layar	
+M03	LOLOS	M03 pola pesan izin internal tidak lagi dikenali (saringan jadi hiasan)	
+M04	TERTANGKAP	M04 lencana tab menulis 0 pada panel yang ditolak ('tidak ada datanya')	
+M05	TERTANGKAP	M05 omittedSources dilepas (layar tak bisa menyebut panel yang hilang)	
+M06	TERTANGKAP	M06 penanda data-panel-state='denied' dihapus (uji kehilangan pegangan)	
+M07	TERTANGKAP	M07 kartu ditolak tidak lagi menegaskan 'ini BUKAN belum ada data'	
+M08	TERTANGKAP	M08 PanelStateView dihapus (setiap tab harus memilih kartunya sendiri)	
+M09	TERTANGKAP	M09 testId keadaan panel dicabut dari daftar resmi	
+M10	TERTANGKAP	M10 profil lead memakai Promise.all lagi (pola all-or-nothing kembali)	
+M11	TERTANGKAP	M11 permintaan primer dicampur panel (403 panel mematikan halaman lagi)	
+M12	TERTANGKAP	M12 kalimat galat halaman disusun dari STATUS PANEL, bukan permintaan primer	
+M13	TERTANGKAP	M13 lencana tab Survey dihitung dari daftar mentah (0 saat ditolak)	
+M14	TERTANGKAP	M14 sebab 403 tidak dibaca dari permintaan lead (layar menuduh izin yang salah)	
+M15	TERTANGKAP	M15 spanduk 'sebagian panel tidak ditampilkan' dilepas dari profil lead	
+M16	TERTANGKAP	M16 daftar panel yang tidak ditampilkan tidak lagi disusun	
+M17	TERTANGKAP	M17 penolakan panel diubah menjadi daftar kosong (403 = 'belum ada data')	
+M18	TERTANGKAP	M18 spanduk sebagian panel dilepas dari profil pelanggan	
+M19	TERTANGKAP	M19 lencana tab Unit pelanggan dihitung dari daftar mentah	
+M20	TERTANGKAP	M20 primer profil pelanggan dicampur panel unit	
+M21	TERTANGKAP	M21 tab Survey tetap menggambar daftar walau panelnya ditolak	
+M22	TERTANGKAP	M22 tombol 'Jadwalkan Survey' muncul untuk peran yang pasti 403 (tombol mati)	
+M23	TERTANGKAP	M23 tombol 'Buat Reservasi' muncul untuk peran yang pasti 403	
+M24	TERTANGKAP	M24 timeline tidak lagi menandai jejak yang SEBAGIAN	
+M25	LOLOS	M25 kalimat 'Jejak ini SEBAGIAN' diperhalus sampai tak bermakna	
+M26	TERTANGKAP	M26 checklist dokumen memuntahkan detail galat backend ke layar	
+M27	TERTANGKAP	M27 panel penawaran tidak lagi membedakan 403 dari 'gagal dimuat'	
+M28	TERTANGKAP	M28 panel percakapan WA menampilkan detail galat backend apa adanya	
+M29	TERTANGKAP	M29 daftar 'belum dibangun' ditulis TANGAN lagi (bisa membusuk diam-diam)	
+M30	TERTANGKAP	M30 baris peta 'Analitik & BI' menunjuk rute yang tidak ada	
+M31	TERTANGKAP	M31 kotak 'belum dibangun' selalu dipasang walau tidak ada yang terkunci	
+M32	TERTANGKAP	M32 cabang jujur 'semua menu bisa dibuka' dihapus	
+M33	LOLOS	M33 izin BACA appointments untuk keuangan dicabut dari KODE (default)	reload 6s
+M34	LOLOS	M34 pemisahan tugas dimatikan: keuangan boleh MENJADWALKAN survei (kode)	reload 4s
+M35	TERTANGKAP	M35 endpoint penjadwalan hanya butuh izin BACA (siapa pun pembaca bisa menjadwalkan)	reload 4s · 2 appointments dibuang · 2 tasks dibuang · 3 activities dibuang · 1 tahap lead dipulihkan
+M36	TERTANGKAP	M36 403 lingkup baris memakai kalimat izin peran (dua sebab jadi satu kalimat)	reload 4s
+M37	TERTANGKAP	M37 izin melebar: peran proyek diberi baca appointments tanpa alasan bisnis	reload 4s
+M38	TERTANGKAP	M38 matriks TERSIMPAN mencabut hak baca appointments keuangan (langsung ke database)	mutasi database

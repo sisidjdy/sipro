@@ -1,0 +1,135 @@
+// Fase 48 — pengadaan & subkon lanjutan.
+// Vendor & daftar harga (48A), permintaan→PO + retur + 3-way MENAHAN (48B), uang muka /
+// potongan / retensi subkon (48C), evaluasi berbukti (48D), kendali stok (48E).
+export const VENDOR = {
+  tab: "procurement-tab-vendors",
+  panel: "vendors-panel",
+  row: "vendor-row",
+  addBtn: "vendor-add-button",
+  dialog: "vendor-dialog",
+  code: "vendor-code-input",
+  name: "vendor-name-input",
+  categorySelect: "vendor-category-select",
+  terms: "vendor-terms-input",
+  npwp: "vendor-npwp-input",
+  phone: "vendor-phone-input",
+  submit: "vendor-submit-button",
+  detail: "vendor-detail-sheet",
+  detailBtn: "vendor-detail-button",
+  editBtn: "vendor-edit-button",
+  // daftar harga
+  priceTab: "procurement-tab-prices",
+  pricePanel: "vendor-price-panel",
+  priceAddBtn: "vendor-price-add-button",
+  priceDialog: "vendor-price-dialog",
+  priceVendorSelect: "vendor-price-vendor-select",
+  priceProjectSelect: "vendor-price-project-select",
+  priceMaterialSelect: "vendor-price-material-select",
+  priceValue: "vendor-price-value",
+  priceFrom: "vendor-price-from",
+  priceSubmit: "vendor-price-submit",
+  priceRow: "vendor-price-row",
+  // Catatan: pembanding harga TIDAK memakai tombol — kotak pembanding muncul sendiri saat
+  // sebuah material dipilih di `priceMaterialSelect` (satu langkah lebih sedikit untuk
+  // pemakai). Test id tombol yang tidak pernah dirender pernah membuat uji E2E melaporkan
+  // "fitur pembanding tidak ada", jadi jangan dihidupkan lagi tanpa tombolnya.
+  compareBox: "vendor-price-compare-box",
+  compareRow: "vendor-price-compare-row",
+  // evaluasi
+  evalTab: "procurement-tab-evaluation",
+  evalPanel: "vendor-eval-panel",
+  evalCard: "vendor-eval-card",
+  evalScore: "vendor-eval-score",
+  evalMissing: "vendor-eval-missing",
+  assessBtn: "vendor-assess-button",
+  assessDialog: "vendor-assess-dialog",
+  assessPeriod: "vendor-assess-period",
+  assessNote: "vendor-assess-note",
+  assessSubmit: "vendor-assess-submit",
+  assessRow: "vendor-assess-row",
+};
+
+export const RETURNS = {
+  tab: "procurement-tab-returns",
+  panel: "returns-panel",
+  row: "return-row",
+  addBtn: "return-add-button",
+  dialog: "return-dialog",
+  poSelect: "return-po-select",
+  grnSelect: "return-grn-select",
+  kindSelect: "return-kind-select",
+  qty: "return-qty-input",
+  reason: "return-reason-input",
+  submit: "return-submit-button",
+};
+
+export const THREEWAY48 = {
+  overrideBadge: "threeway-override-badge",
+  heldBadge: "threeway-held-badge",
+  reason: "threeway-override-reason",
+};
+
+export const REQPO = {
+  shortageBtn: "requisition-shortage-button",
+  shortageBox: "requisition-shortage-box",
+  shortageRow: "requisition-shortage-row",
+  dialog: "requisition-to-po-dialog",
+  vendorSelect: "requisition-po-vendor-select",
+  price: "requisition-po-price",
+  due: "requisition-po-due",
+  submit: "requisition-po-submit",
+};
+
+export const SUBFIN = {
+  advanceTab: "subcon-tab-advances",
+  advancePanel: "subcon-advance-panel",
+  advanceRow: "subcon-advance-row",
+  advanceAddBtn: "subcon-advance-add-button",
+  advanceDialog: "subcon-advance-dialog",
+  advanceSpkSelect: "subcon-advance-spk-select",
+  advanceAmount: "subcon-advance-amount",
+  advanceReason: "subcon-advance-reason",
+  advanceSubmit: "subcon-advance-submit",
+  advanceApproveBtn: "subcon-advance-approve-button",
+  advanceRejectBtn: "subcon-advance-reject-button",
+  advanceDecisionReason: "subcon-advance-decision-reason",
+  advanceDecisionSubmit: "subcon-advance-decision-submit",
+  advancePayBtn: "subcon-advance-pay-button",
+  deductionPanel: "subcon-deduction-panel",
+  deductionRow: "subcon-deduction-row",
+  deductionAddBtn: "subcon-deduction-add-button",
+  deductionDialog: "subcon-deduction-dialog",
+  deductionKindSelect: "subcon-deduction-kind-select",
+  deductionAmount: "subcon-deduction-amount",
+  deductionReason: "subcon-deduction-reason",
+  deductionSubmit: "subcon-deduction-submit",
+  deductionCancelBtn: "subcon-deduction-cancel-button",
+  retentionTab: "subcon-tab-retentions",
+  retentionPanel: "subcon-retention-panel",
+  retentionRow: "subcon-retention-row",
+  retentionGate: "subcon-retention-gate",
+  retentionRequestBtn: "subcon-retention-request-button",
+  retentionReleaseBtn: "subcon-retention-release-button",
+  retentionReason: "subcon-retention-reason",
+  retentionSubmit: "subcon-retention-submit",
+  evalTab: "subcon-tab-evaluation",
+  evalPanel: "subcon-eval-panel",
+};
+
+export const STOCK = {
+  tab: "materials-tab-stock-control",
+  panel: "stock-control-panel",
+  alertRow: "stock-alert-row",
+  minInput: "stock-min-input",
+  minSaveBtn: "stock-min-save-button",
+  transferBtn: "stock-transfer-button",
+  transferDialog: "stock-transfer-dialog",
+  transferMaterial: "stock-transfer-material",
+  transferTarget: "stock-transfer-target",
+  transferQty: "stock-transfer-qty",
+  transferReason: "stock-transfer-reason",
+  transferSubmit: "stock-transfer-submit",
+  transferRow: "stock-transfer-row",
+  valuationRow: "stock-valuation-row",
+  valuationTotal: "stock-valuation-total",
+};

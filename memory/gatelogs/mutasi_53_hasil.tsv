@@ -1,0 +1,47 @@
+M01	TERTANGKAP	M01 penahanan unit tidak lagi ATOMIK (satu rumah bisa dijanjikan dua kali)	D3: K1b,D3
+M02	TERTANGKAP	M02 reservasi menulis deal `status="active"` (bentuk deal bercabang lagi)	D1: D1,D5,D6,D7,D8,D9
+M03	TERTANGKAP	M03 masa keep unit tidak diisi (reservasi tidak pernah kedaluwarsa)	D2: D2
+M04	TERTANGKAP	M04 tahap lead tidak dimajukan oleh BUKTI reservasi (mundur ke pilihan manual)	D4: K1d,D4
+M05	TERTANGKAP	M05 CACAT ASLI: penawaran membuat deal SENDIRI berbentuk lain	K2: K2,K3
+M06	TERTANGKAP	M06 konversi tidak lagi idempoten (kontrak kembar untuk satu deal)	D13: K4,D13
+M07	TERTANGKAP	M07 CACAT ASLI: pembeli baru tidak menyimpan tautan ke lead	D11: D11
+M08	TERTANGKAP	M08 tahap lead tidak diakhiri `won` (lead hidup selamanya)	D14: D14
+M09	TERTANGKAP	M09 dedup NIK dimatikan (satu manusia jadi dua baris pembeli)	D40: D40
+M10	TERTANGKAP	M10 penahan 'booking dulu' hilang dari pratinjau (status kembali mengalahkan bukti)	D5: D5,D6,D7,D8
+M11	TERTANGKAP	M11 konversi MENGABAIKAN penahan (layar menahan, server mengizinkan)	D8: D8
+M12	TERTANGKAP	M12 label penahan konversi diketik kode sendiri (bukan Kamus Data)	K11: K11
+M13	TERTANGKAP	M13 kode penahan tidak terdaftar di Kamus Data (layar menampilkan kode mentah)	D7: K11b,D7
+M14	LOLOS	M14 pengajuan KPR tidak dibuat untuk kontrak KPR (sub-alur KPR mati)	
+M15	TERTANGKAP	M15 nominal kosong dipaksa 0 saat baris disusun (dokumen ikut berbohong)	D16: K7,D16,D25
+M16	TERTANGKAP	M16 komponen biaya kosong dianggap TERISI bernilai 0	D16 (lewat jalan lain): D17,D25,D26
+M17	TERTANGKAP	M17 total tidak pernah ditandai SEMENTARA (angka setengah tampak final)	D17: K8,D17
+M18	TERTANGKAP	M18 gerbang PPJB dimatikan (PPJB bisa maju tanpa DP masuk)	D18: D18
+M19	TERTANGKAP	M19 label penahan legal diketik sendiri (SSOT tahap legal bercabang)	K10: K10
+M20	TERTANGKAP	M20 `akad_kredit` dicabut dari urutan legal (cacat asli 3 kembali)	K9: K9,D39
+M21	TERTANGKAP	M21 gerbang akad kredit berhenti membaca SP3K	K12: K12
+M22	TERTANGKAP	M22 syarat SPKT dicabut dari gerbang akad (kelebihan tanah tanpa surat)	K12b: K12b
+M23	TERTANGKAP	M23 kelebihan tanah tidak wajib lunas sebelum akad `[DOC]`	K12c: K12c
+M24	TERTANGKAP	M24 tahap SP3K tidak lagi menuntut BERKAS bukti	D19: K13,D19
+M25	TERTANGKAP	M25 tahap SP3K tidak lagi menuntut plafon yang DISETUJUI bank	D37: K13,D37,D38,D39
+M26	TERTANGKAP	M26 akad kredit berhenti memeriksa ULANG SP3K di mesin KPR	K13b: K13b
+M27	TERTANGKAP	M27 bulan pada nomor dokumen jadi angka (bukan format owner)	D33: K14,D33
+M28	TERTANGKAP	M28 biaya yang belum diisi dicetak 'Rp 0' (dokumen legal berbohong)	D25: K15,D25
+M29	TERTANGKAP	M29 varian dokumen tidak lagi mengikuti skema kontrak	D30: K16,D30
+M30	TERTANGKAP	M30 plafon tidak lagi dibaca dari kontrak (SPR KPR tanpa angka bank)	D34: D34
+M31	TERTANGKAP	M31 nomor urut dokumen dari HITUNGAN dokumen (nomor bisa berulang)	K14b: K14b
+M32	TERTANGKAP	M32 tahap legal boleh dimajukan pengisi angka (izin dilonggarkan)	D23: K17b,D23
+M33	TERTANGKAP	M33 mengisi biaya menuntut izin `manage` (Keuangan kehilangan tugasnya)	D24: K17,D24,D25,D26,D27,D28
+M34	TERTANGKAP	M34 usulan varian dokumen dihapus dari jawaban API (layar menebak sendiri)	D29: D29
+M35	TERTANGKAP	M35 layar mencetak Rp 0 untuk biaya yang belum diisi	K18: K18,K20b
+M36	TERTANGKAP	M36 field Bank kembali menjadi kotak teks bebas (empat ejaan 'BTN' = empat bank)	K19b: K19,K19b
+M37	TERTANGKAP	M37 testId penahan legal dilepas dari layar (uji kehilangan pegangan tanpa suara)	K20b: K20b
+M14	TERTANGKAP	M14 pengajuan KPR tidak dibuat untuk kontrak KPR (sub-alur KPR mati)	D19 (lewat jalan lain): D14b
+M38	TERTANGKAP	M38 tombol 'Jadikan Pembeli' kembali memakai penanda `?hub=` (mendarat di Ringkasan sambil mengaku membawa ke kontrak)	K21b: K21b
+M39	TERTANGKAP	M39 tautan 'Buka Kontrak & Legal' memakai penanda yang tidak dibaca halamannya	K21b: K21b
+M40	TERTANGKAP	M40 daftar komponen belum-diisi kembali berisi KODE KOLOM (bukan label manusia)	D26c: K22,D26c,D26d,D26e,D26f
+M41	TERTANGKAP	M41 catatan 'total masih SEMENTARA' pada API kembali menyebut kode kolom	K22b: K22b,D26d
+M42	TERTANGKAP	M42 DOKUMEN yang ditandatangani pembeli kembali mencetak kode kolom	D26e: K23,D26e
+M43	TERTANGKAP	M43 peringatan panel dokumen kembali menyebut kode kolom	D26f: K23b,D26f
+M44	TERTANGKAP	M44 spanduk 'masih SEMENTARA' di layar kembali menyebut kode kolom	K24: K24
+M45	TERTANGKAP	M45 CACAT ASLI: baris di luar lingkup disembunyikan TANPA SEBAB (layar berkata 'belum ada kontrak' untuk kontrak yang ADA)	D26h: D26h
+M46	TERTANGKAP	M46 layar berhenti membedakan 'belum ada' dari 'bukan lingkup Anda'	K25b: K20b,K25b

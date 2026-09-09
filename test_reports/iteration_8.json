@@ -1,0 +1,37 @@
+{
+  "summary": "Iterasi 8 — Cabang Peran Literal (has_role) + Salin Peran (copy_from). Backend regresi test_dynamic_roles.py 7/7 passed dalam 10.73s. Skenario UI Duplikat lengkap HIJAU: (a) tombol admin-roles-copy tampil untuk peran non-akses-penuh (finance) dan TIDAK tampil untuk super_admin/owner; (b) klik Duplikat pada Finance → dialog admin-role-form berjudul 'Duplikat peran: Finance', prefill nama='Finance (Salinan)' dan kode='finance_salinan' (field kode enable/editable); (c) ubah menjadi 'Finance QA Copy' / 'finance_qa_copy' → toast berbunyi 'Peran \"Finance QA Copy\" dibuat dengan izin yang sama seperti Finance.'; baris admin-roles-row[data-role=finance_qa_copy] muncul di panel dan kolom muncul di admin-permissions-matrix. Backend copy_from finance → 200 dgn copied_from='finance', copied_perms=103; effective[res][qa_copy_x].perms == effective[res][finance].perms untuk SEMUA resource (mismatch=[]) — termasuk cash_bons, receivables, journals, projects, users. copy_from=owner → 400 dgn pesan 'Peran yang disalin harus peran yang ada dan bukan Direksi/Super Admin.'. Skenario has_role backend: peran kustom qa_pm_x inherits project_manager scope=all → /api/build/calendar 200 dan can.configure=True; peran kustom qa_sales_x inherits sales → /api/build/calendar 403. Semua peran/user QA sudah dibersihkan (user → site_engineer + is_active false → DELETE peran). SATU DISKREPANSI ditemukan di UI /construction untuk PM (lihat action_items).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "ConstructionPage.js",
+        "issue": "FIELD_ROLES = [\"site_engineer\"] SAJA — tidak termasuk project_manager. Akibatnya user dengan nav_role=project_manager mendarat di tab 'Monitoring Unit' (monitor), BUKAN 'Papan Mandor' (board) seperti yang dinyatakan di review_request ('tab awal Papan Mandor aktif karena nav_role=project_manager termasuk FIELD_ROLES'). Terverifikasi: login qa_pm_x@sipro.co.id → /construction → tab aktif = 'Monitoring Unit' (lihat screenshot iter8_pm_construction.png).",
+        "selector": "/app/frontend/src/pages/ConstructionPage.js:47 FIELD_ROLES",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_dynamic_roles.py",
+    "/app/test_reports/pytest/iter8_dynamic_roles.xml"
+  ],
+  "action_items": [
+    "Putuskan apakah FIELD_ROLES di /app/frontend/src/pages/ConstructionPage.js perlu ditambah 'project_manager' agar cabang UI 'Papan Mandor' menjadi tab awal untuk PM (sesuai narasi review_request), ATAU perbarui narasi review_request bila memang niatnya hanya site_engineer yg dapat 'board' sebagai default. Halaman tetap MEMUAT tanpa error untuk PM — tab 'Papan Mandor' terlihat tapi tidak aktif secara default."
+  ],
+  "critical_code_review_comments": [
+    "rbac.has_role telah menggantikan cek literal role di build_calendar_router (_can) — terbukti oleh test has_role: peran kustom inherits project_manager berhasil melewati cabang CONFIG_ROLES (owner/super_admin/project_manager), sementara inherits sales tetap 403. Implementasi backend rapi.",
+    "admin_router.create_role dgn copy_from melakukan deep copy effective_matrix ke matrix baris peran baru — hasilnya effective baris salinan == effective peran sumber untuk SEMUA resource (verifikasi lengkap di test_copy_role_carries_effective_perms). Penolakan copy_from=owner/super_admin bekerja (400).",
+    "Field 'kode' pada dialog Duplikat dapat diedit oleh user (tidak disabled) — sesuai other_misc_info. Prefill '{code}_salinan' + '(Salinan)' cukup ramah pengguna.",
+    "MINOR frontend: FIELD_ROLES hanya berisi 'site_engineer' — konsisten dengan definisi 'field/lapangan', tapi kalau tujuan cabang UI mengikuti has_role literal parent, sebaiknya sinkron dgn CONFIG_ROLES backend atau setidaknya masukkan project_manager sesuai review_request."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (7/7 pytest + 3/3 skenario has_role/copy)", "frontend": "83% (5/6 skenario — 1 diskrepansi tab awal PM)"},
+  "test_credentials": "superadmin@sipro.co.id / Sipro#2026",
+  "seed_data_creation": "Selama uji: peran qa_copy_x, finance_qa_copy, qa_pm_x, qa_sales_x + user qa_pm_x@ dan qa_sales_x@ SEMUA sudah dibersihkan pada akhir uji (user → site_engineer + is_active false, lalu DELETE peran). Verifikasi cleanup: DELETE endpoints return 200.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "test_dynamic_roles.py sekarang 7 test (5 lama + test_copy_role_carries_effective_perms + test_has_role_follows_parent_for_literal_branches). Cleanup fixture menangani CODE utama dan tests copy/has_role menangani cleanup masing-masing di finally. Field 'kode' di dialog Duplikat editable — bukan disabled. Untuk UI /construction PM: FIELD_ROLES = ['site_engineer'] di ConstructionPage.js sehingga PM default ke tab 'monitor', bukan 'board' seperti dinyatakan review_request.",
+  "rca of the issue": "Diskrepansi tab awal PM: review_request menyatakan 'nav_role=project_manager termasuk FIELD_ROLES' namun kode /app/frontend/src/pages/ConstructionPage.js:47 mendefinisikan FIELD_ROLES = [\"site_engineer\"] saja. Solusi (bila memang dimaksudkan PM ikut cabang 'board'): ubah menjadi FIELD_ROLES = [\"site_engineer\", \"project_manager\"]. Halaman /construction tetap tidak error untuk PM — hanya tab awal yang berbeda dari harapan."
+}

@@ -1,0 +1,31 @@
+{
+  "summary": "Tested SIPRO iteration 15 features A (Lingkup Peran Bawaan - built-in role scope editor) and B (Langkah Tanpa RAB - RAB rows/steps sync). All 11 backend pytest cases pass; UI flows for both features pass end-to-end. Sales scope enforcement verified: default 'own' -> scope 'all' widens sales' /api/leads visibility, and /api/auth/me reflects role_scope live without re-login. RAB steps_without_rab count decrements when a chip is added and drops to 0 after 'Tambah semua' + save. Cleanup performed: TIPE-36-72 and TIPE-45-90 items cleared, sales scope restored to 'own'.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "RAB / BoQ (RAB Unit dialog or Admin permissions Select)", "issues": ["Console React hydration warning: 'In HTML, <span> cannot be a child of <option>'. Native <option> element contains a <span>, causes hydration warning. Likely in a select rendering scope labels or step options. Not functional-blocking but should be cleaned up."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter15_features.py",
+    "/app/test_reports/pytest/iter15.xml"
+  ],
+  "action_items": [
+    "Fix React hydration warning: replace <span> inside <option> with plain text or use a custom Select component (not a native <option>) in whichever select renders scope/step choices (likely a fallback native select somewhere)."
+  ],
+  "critical_code_review_comments": [
+    "PUT /api/admin/roles/{code} correctly rejects label edits for built-in roles (400) and invalid scope values; full-access roles owner/super_admin cannot be scope-restricted — good.",
+    "role_scope override persists via permission_settings (role_scope_overrides) and /api/auth/me reflects the change without token refresh — good UX.",
+    "RAB PUT /api/rab/templates/unit_type/{ref_code} accepts unit_price=0 (test used 1_000_000; UI save with unit_price 0 also produced 'RAB tersimpan') — confirm this is intentional or add validation."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter15_features.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "superadmin@sipro.co.id / Sipro#2026, sales@sipro.co.id / Sipro#2026 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None. Test added and then removed RAB items on TIPE-36-72 and TIPE-45-90; sales role scope override was toggled and then restored to 'own' (default).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Feature A + B fully verified. Backend pytest lives at /app/backend/tests/test_iter15_features.py. Note: RAB list rows use key 'ref_code' (not 'code'/'type_code'). The RAB template PUT endpoint replaces the items array. Cleanup step is important to keep TIPE-36-72 items=0 (baseline 20 steps_without_rab) for future re-runs.",
+  "rca of the issue": "N/A — no functional bugs found. Only a non-blocking React hydration warning surfaced in console (<span> inside <option>)."
+}

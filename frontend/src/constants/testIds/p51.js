@@ -1,0 +1,66 @@
+// Fase 51 — retensi subkon ↔ klaim garansi (51A), pengingat WhatsApp otomatis (51B),
+// dan portal pembeli yang diperkuat: BAST, kwitansi, pengakuan penyelesaian klaim (51C).
+//
+// Aturan repo: setiap elemen yang bisa ditekan/diisi WAJIB punya testId, dan testId yang
+// tidak pernah dirender HARUS dihapus (pelajaran Fase 48: `vendor-price-compare-button`
+// membuat uji E2E salah lapor selama dua fase).
+export const P51 = {
+  // ---------- 51A retensi ditahan klaim garansi ----------
+  retentionWarrantyHold: "p51-retention-warranty-hold",
+  retentionWarrantyClaim: "p51-retention-warranty-claim",
+  retentionWarrantyLink: "p51-retention-warranty-link",
+  retentionMaintenanceNote: "p51-retention-maintenance-note",
+  retentionWaiveBtn: "p51-retention-waive-btn",
+  retentionWaiveDialog: "p51-retention-waive-dialog",
+  retentionWaiveCode: "p51-retention-waive-code",
+  retentionWaiveReason: "p51-retention-waive-reason",
+  retentionWaiveSubmit: "p51-retention-waive-submit",
+  retentionWaiveCancel: "p51-retention-waive-cancel",
+  retentionWaivedBlock: "p51-retention-waived-block",
+  retentionWaiveHint: "p51-retention-waive-hint",
+
+  // ---------- 51B pengingat WhatsApp otomatis ----------
+  remindersTab: "p51-reminders-tab",
+  remindersPanel: "p51-reminders-panel",
+  remindersMode: "p51-reminders-mode",
+  remindersSettings: "p51-reminders-settings",
+  remindersSettingRow: "p51-reminders-setting-row",
+  remindersConfigLink: "p51-reminders-config-link",
+  remindersRunBtn: "p51-reminders-run-btn",
+  remindersRunDialog: "p51-reminders-run-dialog",
+  remindersRunKind: "p51-reminders-run-kind",
+  remindersRunSubmit: "p51-reminders-run-submit",
+  remindersRunCancel: "p51-reminders-run-cancel",
+  remindersRunDenied: "p51-reminders-run-denied",
+  remindersRunResult: "p51-reminders-run-result",
+  remindersSubTabCandidates: "p51-reminders-subtab-candidates",
+  remindersSubTabHistory: "p51-reminders-subtab-history",
+  remindersCandidateRow: "p51-reminders-candidate-row",
+  remindersCandidateBlocked: "p51-reminders-candidate-blocked",
+  remindersCandidateEmpty: "p51-reminders-candidate-empty",
+  remindersKindFilter: "p51-reminders-kind-filter",
+  remindersStatusFilter: "p51-reminders-status-filter",
+  remindersHistoryRow: "p51-reminders-history-row",
+  remindersHistoryEmpty: "p51-reminders-history-empty",
+  remindersHistoryBody: "p51-reminders-history-body",
+  remindersRefresh: "p51-reminders-refresh",
+
+  // ---------- 51C portal pembeli: dokumen & pengakuan ----------
+  portalBastSection: "p51-portal-bast-section",
+  portalBastRow: "p51-portal-bast-row",
+  portalBastPdf: "p51-portal-bast-pdf",
+  portalBastEmpty: "p51-portal-bast-empty",
+  portalReceiptSection: "p51-portal-receipt-section",
+  portalReceiptRow: "p51-portal-receipt-row",
+  portalReceiptPdf: "p51-portal-receipt-pdf",
+  portalReceiptEmpty: "p51-portal-receipt-empty",
+  portalAckBtn: "p51-portal-ack-btn",
+  portalAckDialog: "p51-portal-ack-dialog",
+  portalAckYes: "p51-portal-ack-yes",
+  portalAckNo: "p51-portal-ack-no",
+  portalAckNote: "p51-portal-ack-note",
+  portalAckSubmit: "p51-portal-ack-submit",
+  portalAckCancel: "p51-portal-ack-cancel",
+  portalAckDone: "p51-portal-ack-done",
+  portalAckWaiting: "p51-portal-ack-waiting",
+};

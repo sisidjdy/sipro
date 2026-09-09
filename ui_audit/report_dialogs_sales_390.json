@@ -1,0 +1,77 @@
+{
+ "role": "sales",
+ "base": "http://localhost:3000",
+ "dialogs": [
+  {
+   "page": "lead",
+   "path": "/leads",
+   "trigger": "tambah lead",
+   "testid": "lead-add-button",
+   "title": "Tambah Lead",
+   "dialog_bg": "rgb(243, 244, 247)",
+   "rect": {
+    "top": 45,
+    "bottom": 799,
+    "h": 754,
+    "vh": 844
+   },
+   "findings": [],
+   "console_errors": [],
+   "shot": "/app/ui_audit/dialogs/sales_390/lead_1_tambah-lead.png"
+  },
+  {
+   "page": "deal",
+   "path": "/deals",
+   "trigger": "bayar",
+   "testid": "filter-trigger-payment_status",
+   "title": "",
+   "dialog_bg": "rgb(255, 255, 255)",
+   "rect": {
+    "top": 376,
+    "bottom": 550,
+    "h": 174,
+    "vh": 844
+   },
+   "findings": [],
+   "console_errors": [],
+   "shot": "/app/ui_audit/dialogs/sales_390/deal_1_bayar.png"
+  },
+  {
+   "page": "customer",
+   "path": "/customers",
+   "trigger": "tambah customer",
+   "testid": "customer-add-button",
+   "title": "Tambah Customer",
+   "dialog_bg": "rgb(243, 244, 247)",
+   "rect": {
+    "top": 63,
+    "bottom": 781,
+    "h": 717,
+    "vh": 844
+   },
+   "findings": [],
+   "console_errors": [],
+   "shot": "/app/ui_audit/dialogs/sales_390/customer_1_tambah-customer.png"
+  },
+  {
+   "page": "customer",
+   "path": "/customers",
+   "trigger": "ditambahkan",
+   "testid": "filter-trigger-created",
+   "title": "",
+   "dialog_bg": "rgb(255, 255, 255)",
+   "rect": {
+    "top": 442,
+    "bottom": 632,
+    "h": 190,
+    "vh": 844
+   },
+   "findings": [],
+   "console_errors": [
+    "WebSocket connection to 'ws://localhost:443/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED"
+   ],
+   "shot": "/app/ui_audit/dialogs/sales_390/customer_2_ditambahkan.png"
+  }
+ ],
+ "pages_scanned": 3
+}

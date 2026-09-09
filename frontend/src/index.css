@@ -1,0 +1,350 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        /* Fase 67 — KANVAS BERLAPIS.
+           Latar lama (36 33% 98% — krem hangat) hampir tidak bisa dibedakan dari kartu
+           putih, sehingga seluruh aplikasi terlihat "flat": kartu, tabel, dan search bar
+           lenyap ke dalam latar. Kanvas sekarang slate dingin yang jelas lebih gelap dari
+           kartu, dengan garis batas yang benar-benar terlihat dan bayangan tipis. */
+        --background: 220 20% 96%;
+        --foreground: 222 47% 11%;
+        --card: 0 0% 100%;
+        --card-foreground: 222 47% 11%;
+        --surface-sunken: 220 16% 93%;   /* dasar untuk toolbar/kepala tabel */
+        --surface-raised: 0 0% 100%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 222 47% 11%;
+        /* Aksen teal-biru DIPERTEGAS (permintaan pemakai: tetap teal/biru, lebih tegas) */
+        --primary: 194 92% 27%;
+        --primary-hover: 194 92% 22%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 214 24% 92%;
+        --secondary-hover: 214 22% 87%;
+        --secondary-foreground: 222 47% 14%;
+        --muted: 220 16% 93%;
+        --muted-foreground: 215 18% 38%;
+        --accent: 190 60% 94%;
+        --accent-foreground: 194 92% 22%;
+        --destructive: 354 74% 47%;
+        --destructive-hover: 354 74% 40%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 215 18% 85%;
+        --input: 215 18% 80%;
+        --ring: 194 92% 34%;
+        --radius: 0.625rem;
+        --shadow-card: 0 1px 2px hsl(222 47% 11% / 0.05), 0 1px 3px hsl(222 47% 11% / 0.04);
+        --shadow-raised: 0 2px 4px hsl(222 47% 11% / 0.06), 0 8px 20px -8px hsl(222 47% 11% / 0.12);
+        --chart-1: 194 92% 30%;
+        --chart-2: 28 90% 50%;
+        --chart-3: 152 55% 34%;
+        --chart-4: 222 47% 35%;
+        --chart-5: 354 74% 47%;
+    }
+    .dark {
+        --background: 222 47% 7%;
+        --foreground: 210 40% 98%;
+        --surface-sunken: 222 40% 12%;
+        --surface-raised: 222 47% 12%;
+        --primary-hover: 194 92% 52%;
+        --secondary-hover: 217 19% 22%;
+        --destructive-hover: 354 74% 56%;
+        --shadow-card: 0 1px 2px hsl(0 0% 0% / 0.4);
+        --shadow-raised: 0 8px 24px -8px hsl(0 0% 0% / 0.6);
+        --card: 222 47% 10%;
+        --card-foreground: 210 40% 98%;
+        --popover: 222 47% 9%;
+        --popover-foreground: 210 40% 98%;
+        --primary: 194 92% 45%;
+        --primary-foreground: 222 47% 7%;
+        --secondary: 217 19% 16%;
+        --secondary-foreground: 210 40% 98%;
+        --muted: 217 19% 16%;
+        --muted-foreground: 215 20% 70%;
+        --accent: 196 40% 18%;
+        --accent-foreground: 196 84% 70%;
+        --destructive: 0 62% 40%;
+        --destructive-foreground: 210 40% 98%;
+        --border: 217 19% 20%;
+        --input: 217 19% 24%;
+        --ring: 196 84% 45%;
+        --chart-1: 196 84% 45%;
+        --chart-2: 28 90% 60%;
+        --chart-3: 152 55% 45%;
+        --chart-4: 222 47% 60%;
+        --chart-5: 0 72% 55%;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+        font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        /* Kanvas tidak lagi abu-abu rata: gradasi aksen sangat tipis di tepi atas memberi
+           kedalaman tanpa mengganggu keterbacaan kartu. */
+        background-image:
+            radial-gradient(1100px 380px at 88% -12%, hsl(var(--primary) / 0.07), transparent 62%),
+            linear-gradient(180deg, hsl(var(--primary) / 0.045), transparent 420px);
+        background-attachment: fixed;
+    }
+    h1, h2, h3, h4, .font-heading {
+        font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+    }
+    .font-mono, code {
+        font-family: "Roboto Mono", ui-monospace, Menlo, monospace;
+    }
+}
+
+/* ============================================================================
+   Fase 67 — LAPISAN & HIERARKI BERSAMA.
+   Semua kelas di bawah dipakai lapisan bersama (primitif shadcn + komponen pola),
+   sehingga ~60 halaman ikut membaik tanpa menyentuh satu per satu. Tujuannya menutup
+   keluhan nyata: "semua flat, warnanya sama dengan latar, search bar tanpa gaya,
+   tulisan tidak konsisten, aksi penting tidak terlihat penting".
+   ========================================================================== */
+@layer components {
+    /* Judul & keterangan halaman — SATU ukuran untuk seluruh aplikasi (dulu campur
+       text-xl dan text-2xl, dan keterangan melebar melintasi layar). */
+    .page-title {
+        @apply font-heading text-2xl font-semibold leading-tight tracking-tight text-foreground;
+    }
+    .page-desc {
+        @apply mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground;
+    }
+    .section-title {
+        @apply font-heading text-base font-semibold leading-tight tracking-tight;
+    }
+    .eyebrow {
+        @apply text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground;
+    }
+
+    /* Permukaan: kartu (naik) vs panel cekung (toolbar, kepala tabel, catatan). */
+    .surface-card {
+        @apply rounded-xl border border-border bg-card;
+        box-shadow: var(--shadow-card);
+    }
+    .surface-sunken {
+        @apply rounded-xl border border-border;
+        background-color: hsl(var(--surface-sunken));
+    }
+    .surface-raised {
+        @apply rounded-xl border border-border bg-card;
+        box-shadow: var(--shadow-raised);
+    }
+
+    /* Search bar: latar sendiri + bayangan (indentasi kiri untuk ikon diberikan komponen
+       sebagai utilitas `pl-9`, karena `px-3` milik Input berada di layer utilities dan akan
+       mengalahkan @apply di layer components). */
+    .search-field {
+        @apply bg-card shadow-sm;
+    }
+
+    /* Baris alat di atas tabel/daftar — punya permukaannya sendiri agar tidak menempel
+       ke latar halaman. */
+    .toolbar {
+        @apply flex flex-wrap items-center gap-2 rounded-xl border border-border p-2;
+        background-color: hsl(var(--surface-sunken));
+    }
+
+    /* Kolom AKSI yang MENEMPEL di kanan saat tabel digulir mendatar (Fase 67, temuan uji):
+       tombol aksi paling kanan dulu berada di luar pandangan pada layar 1366px sehingga
+       pemakai harus menggulir dulu tanpa tahu ada tombol di sana. */
+    .col-actions {
+        @apply sticky right-0 z-10 bg-card;
+        box-shadow: -12px 0 12px -12px hsl(222 47% 11% / 0.25);
+    }
+    /* Sel aksi yang menempel harus mengikuti warna baris (selang-seling & hover) —
+       sebelumnya selalu putih sehingga baris genap terlihat "terpotong". */
+    tr:nth-child(even) > .col-actions {
+        background-color: color-mix(in srgb, hsl(var(--surface-sunken)) 40%, hsl(var(--card)));
+    }
+    tr:hover > .col-actions {
+        background-color: color-mix(in srgb, hsl(var(--accent)) 60%, hsl(var(--card)));
+    }
+    .col-actions-head {
+        @apply sticky right-0 z-10;
+        background-color: hsl(var(--surface-sunken));
+        box-shadow: -12px 0 12px -12px hsl(222 47% 11% / 0.25);
+    }
+
+    /* Angka uang: selalu tabular & rata kanan supaya kolom bisa dibandingkan sekilas. */
+    .money {
+        @apply whitespace-nowrap text-right font-mono tabular-nums;
+    }
+
+    /* Penanda kegentingan pada baris tabel/kartu (kognitif: merah = tertinggal). */
+    .row-danger {
+        @apply border-l-2 border-l-rose-500 bg-rose-50/40;
+    }
+    .row-warning {
+        @apply border-l-2 border-l-amber-500 bg-amber-50/40;
+    }
+
+    /* Titik berdenyut untuk hal yang menuntut tindakan. */
+    .dot-pulse {
+        @apply relative inline-flex h-1.5 w-1.5 rounded-full bg-current;
+    }
+    .dot-pulse::after {
+        content: "";
+        @apply absolute inset-0 rounded-full bg-current opacity-60;
+        animation: sipro-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+    @keyframes sipro-ping {
+        75%, 100% { transform: scale(2.4); opacity: 0; }
+    }
+}
+
+/* Subtle noise texture for the app shell background (design_guidelines) */
+.app-noise {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/></filter><rect width='160' height='160' filter='url(%23n)' opacity='0.035'/></svg>");
+}
+
+/* Dua baris lalu elipsis — dipakai label/keterangan kartu angka supaya keterangan panjang
+   tetap terbaca (dulu dipotong satu baris dengan `truncate` sehingga informasinya hilang). */
+@layer components {
+    .clamp-2 {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+    }
+    /* Angka uang di dalam tabel: rata kanan, tidak boleh terpotong di tengah digit. */
+    .num-cell {
+        @apply whitespace-nowrap text-right tabular-nums;
+    }
+}
+
+/* Semantic status pills — consistent across domains.
+   SENGAJA DI LUAR @layer: nama kelas warna ini dirakit DINAMIS oleh StatusPill
+   (`status-${tone}`), sehingga tidak pernah tertulis literal di berkas sumber.
+   Isi @layer di-tree-shake Tailwind berdasarkan kelas yang terlihat di sumber —
+   di dalam @layer, seluruh warna status dibuang saat build dan semua pill menjadi
+   putih/abu (regresi Fase 67). CSS polos selalu ikut terkompilasi. */
+.status-pill {
+        @apply inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold shadow-sm;
+    }
+    /* Titik warna di depan teks: status bisa dikenali dari BENTUK+WARNA, tidak hanya warna
+       (membantu pemakai yang sulit membedakan warna, dan mempercepat pembacaan tabel). */
+    .status-pill::before {
+        content: "";
+        @apply h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-80;
+    }
+    .status-available { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    .status-holding { @apply bg-amber-50 text-amber-900 border-amber-200; }
+    .status-reserved { @apply bg-sky-50 text-sky-800 border-sky-200; }
+    .status-booked { @apply bg-indigo-50 text-indigo-800 border-indigo-200; }
+    .status-sold { @apply bg-slate-100 text-slate-800 border-slate-200; }
+    .status-overdue { @apply bg-rose-50 text-rose-800 border-rose-200; }
+    .status-due-today { @apply bg-amber-50 text-amber-900 border-amber-200; }
+    .status-on-track { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    .status-simulation { @apply bg-zinc-50 text-zinc-700 border-zinc-200; }
+    .status-simulated { @apply bg-zinc-50 text-zinc-700 border-zinc-200; }
+    .status-live { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    .status-delivered { @apply bg-sky-50 text-sky-800 border-sky-200; }
+    .status-read { @apply bg-indigo-50 text-indigo-800 border-indigo-200; }
+    .status-urgent { @apply bg-rose-50 text-rose-800 border-rose-200; }
+    .status-high { @apply bg-amber-50 text-amber-900 border-amber-200; }
+    .status-medium { @apply bg-sky-50 text-sky-800 border-sky-200; }
+    .status-low { @apply bg-slate-100 text-slate-700 border-slate-200; }
+    .status-open { @apply bg-sky-50 text-sky-800 border-sky-200; }
+    .status-in_progress { @apply bg-indigo-50 text-indigo-800 border-indigo-200; }
+    .status-completed { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    .status-snoozed { @apply bg-zinc-50 text-zinc-700 border-zinc-200; }
+    /* Lead stages */
+    .status-acquisition { @apply bg-sky-50 text-sky-800 border-sky-200; }
+    .status-nurturing { @apply bg-violet-50 text-violet-800 border-violet-200; }
+    .status-appointment { @apply bg-amber-50 text-amber-900 border-amber-200; }
+    .status-booking { @apply bg-indigo-50 text-indigo-800 border-indigo-200; }
+    .status-won { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    .status-recycle { @apply bg-zinc-50 text-zinc-700 border-zinc-200; }
+    .status-lost { @apply bg-rose-50 text-rose-800 border-rose-200; }
+    /* Score bands */
+    .status-hot { @apply bg-rose-50 text-rose-700 border-rose-200; }
+    .status-warm { @apply bg-amber-50 text-amber-800 border-amber-200; }
+    .status-cold { @apply bg-sky-50 text-sky-700 border-sky-200; }
+    /* Deal + document + conversation states */
+    .status-draft { @apply bg-slate-100 text-slate-700 border-slate-200; }
+    .status-finalized { @apply bg-sky-50 text-sky-800 border-sky-200; }
+    .status-signed { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    .status-expired { @apply bg-zinc-100 text-zinc-600 border-zinc-200; }
+    .status-cancelled { @apply bg-rose-50 text-rose-700 border-rose-200; }
+    .status-active { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    .status-closed { @apply bg-slate-100 text-slate-700 border-slate-200; }
+    .status-new { @apply bg-sky-50 text-sky-800 border-sky-200; }
+    /* Finance: AR / AP / commission states */
+    .status-unpaid { @apply bg-amber-50 text-amber-900 border-amber-200; }
+    .status-partial { @apply bg-sky-50 text-sky-800 border-sky-200; }
+    .status-paid { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    .status-pending { @apply bg-amber-50 text-amber-900 border-amber-200; }
+    .status-pending_approval { @apply bg-amber-50 text-amber-900 border-amber-200; }
+    .status-approved { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    .status-paid_off { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    .status-booking_fee { @apply bg-sky-50 text-sky-800 border-sky-200; }
+    .status-resolved { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    .status-not_started { @apply bg-slate-100 text-slate-700 border-slate-200; }
+    .status-submitted { @apply bg-sky-50 text-sky-800 border-sky-200; }
+    .status-rejected { @apply bg-rose-50 text-rose-700 border-rose-200; }
+    .status-verified { @apply bg-violet-50 text-violet-800 border-violet-200; }
+    /* Phase 12 — procurement 3-way match + PO/SPK states */
+    .status-matched { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    .status-flagged { @apply bg-rose-50 text-rose-800 border-rose-200; }
+    .status-received { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    .status-partially_received { @apply bg-sky-50 text-sky-800 border-sky-200; }
+    .status-completed { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    /* Phase 14 — appointment + survey states */
+    .status-scheduled { @apply bg-sky-50 text-sky-800 border-sky-200; }
+    .status-done { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    .status-no_show { @apply bg-rose-50 text-rose-700 border-rose-200; }
+    .status-recommended { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    .status-needs_followup { @apply bg-amber-50 text-amber-900 border-amber-200; }
+    .status-not_recommended { @apply bg-rose-50 text-rose-700 border-rose-200; }
+    .status-reported { @apply bg-sky-50 text-sky-800 border-sky-200; }
+    .status-issued { @apply bg-indigo-50 text-indigo-800 border-indigo-200; }
+    .status-passed { @apply bg-emerald-50 text-emerald-700 border-emerald-200; }
+    .status-failed { @apply bg-rose-50 text-rose-700 border-rose-200; }
+    .status-na { @apply bg-slate-50 text-slate-600 border-slate-200; }
+    /* Fase 27 — kas bon, aset tetap, pembiayaan korporat, marketing fee */
+    .status-disbursed { @apply bg-indigo-50 text-indigo-800 border-indigo-200; }
+    .status-settled { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    .status-fully_depreciated { @apply bg-zinc-100 text-zinc-700 border-zinc-200; }
+    .status-disposed { @apply bg-slate-100 text-slate-700 border-slate-200; }
+    .status-restructured { @apply bg-violet-50 text-violet-800 border-violet-200; }
+    .status-inactive { @apply bg-zinc-100 text-zinc-600 border-zinc-200; }
+    .status-blacklist { @apply bg-rose-50 text-rose-800 border-rose-200; }
+    /* Fase 47 — mutasi bank, bukti transfer, penawaran, absensi & upah harian */
+    .status-unmatched { @apply bg-amber-50 text-amber-900 border-amber-200; }
+    .status-ignored { @apply bg-zinc-100 text-zinc-600 border-zinc-200; }
+    .status-in { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    .status-out { @apply bg-rose-50 text-rose-700 border-rose-200; }
+    .status-updated { @apply bg-sky-50 text-sky-800 border-sky-200; }
+    .status-unchanged { @apply bg-slate-100 text-slate-600 border-slate-200; }
+    .status-awaiting_approval { @apply bg-amber-50 text-amber-900 border-amber-200; }
+    .status-sent { @apply bg-sky-50 text-sky-800 border-sky-200; }
+    .status-converted { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    .status-superseded { @apply bg-zinc-100 text-zinc-600 border-zinc-200; }
+    .status-complete { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    .status-missing_data { @apply bg-amber-50 text-amber-900 border-amber-200; }
+    .status-full { @apply bg-emerald-50 text-emerald-800 border-emerald-200; }
+    .status-half { @apply bg-sky-50 text-sky-800 border-sky-200; }
+    .status-absent { @apply bg-rose-50 text-rose-700 border-rose-200; }
+    .status-leave { @apply bg-violet-50 text-violet-800 border-violet-200; }
+
+@layer base {
+    [data-debug-wrapper="true"] {
+        display: contents !important;
+    }
+}
+
+/* Naskah legal: rata kiri, daftar bernomor dengan indentasi gantung (baris lanjutan sejajar teks). */
+.legal-prose { text-align: left; hyphens: none; }
+.legal-prose .legal-list { list-style-position: outside; padding-left: 1.75rem; }
+.legal-prose .legal-list > li { text-align: left; }
+.legal-prose .legal-list > li::marker { color: hsl(var(--foreground)); font-variant-numeric: tabular-nums; }
+.legal-prose .legal-list .legal-list { padding-left: 1.5rem; margin-top: 0.375rem; }

@@ -1,0 +1,49 @@
+{
+  "summary": "Iter 17: Validated RAB fuzzy template pickup (backend + UI) and Marketing Office field (backend + UI end-to-end). All 6 backend pytests pass; all UI flows verified.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter17_rab_marketing.py",
+    "/app/test_reports/pytest/iter17.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Only one project (Cluster Asri Blok A) exists in seed for the current org — request mentions 'Harmony Land 5' as project but Harmony Land 5 is actually the ORG. Test performed against the available project.",
+    "GET /api/projects/{pid} returns nested {project, units, phases, curve} rather than flat project row — non-obvious but consistent with existing UI usage."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter17_rab_marketing.py"
+  ],
+  "success_rate": {"backend": "100% (6/6)", "frontend": "100%"},
+  "test_credentials": "superadmin@sipro.co.id / Sipro#2026",
+  "seed_data_creation": "Created unit type RT-30-60 (Rumah Tapak 30/60) — left in place per instructions. Created build template QA-3060 during tests — cleaned up (DELETE 200).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "RAB fuzzy: create unit type via POST /api/catalog/unit-types requires base_price. Build steps require day_from/day_to. rab/templates/unit_type uses field 'ref_code' not 'code'. GET /api/projects/{pid} returns nested structure — read body['project']['marketing_office']. Edit Project dialog opens via clicking project-card (opens Sheet) then project-edit-btn. Lead survey appt dialog: data-testid=lead-appt-project/lead-appt-location; location auto-prefills 'Kantor pemasaran <name> — <marketing_office>' exactly.",
+  "detailed_findings": {
+    "rab_backend": {
+      "GET /api/rab/templates/unit_type": "RT-30-60 row has has_schedule_template=true, steps_without_rab=2",
+      "GET /api/rab/templates/unit_type/RT-30-60/sync-check": "has_template=true, steps_without_rab includes S1,S2",
+      "GET /api/build/templates?unit_type=Rumah%20Tapak%2030%2F60": "includes QA-3060 (fuzzy '30/60' ⊂ 'Rumah Tapak 30/60')",
+      "GET /api/build/templates?unit_type=RT-30-60": "includes QA-3060 (matched by ref_code)",
+      "GET /api/build/templates?unit_type=Ruko": "does NOT include QA-3060 (negative)"
+    },
+    "rab_ui": {
+      "RT-30-60 dialog first option": "Otomatis (QA-3060) — matched",
+      "missing chips": "S1 · Persiapan, S2 · Pondasi",
+      "switch to RUKO-14W": "chips update to 16 Ruko steps; clicking chip adds rab-template-row with rab-template-step dropdown populated",
+      "KAVLING (no match)": "first option 'Otomatis — tidak ada yang cocok, pilih manual', rab-template-source-hint visible with 'Tipe Kavling belum tercantum...'"
+    },
+    "marketing_office": {
+      "PUT /api/projects/{pid} {marketing_office}": "200; GET returns value in body['project']['marketing_office']",
+      "POST /api/projects with marketing_office": "created 201, DELETE cleaned up",
+      "UI Tambah Proyek": "project-form-marketing-office input present",
+      "UI Ubah Proyek": "project-edit-marketing-office + project-edit-submit present, save works",
+      "Lead appt dialog prefill": "Location = 'Kantor pemasaran Cluster Asri Blok A — Marketing Gallery Jl. Uji No. 1' (exact expected format)"
+    }
+  }
+}

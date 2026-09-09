@@ -1,0 +1,32 @@
+{
+  "summary": "Iterasi 7 — Peran dinamis (TAMBAH PERAN) diuji end-to-end (backend pytest + Playwright UI). SEMUA skenario yang diminta HIJAU: (a) pytest test_dynamic_roles.py 5/5 passed dalam 5.88s; (b) UI /admin/permissions menampilkan panel Daftar Peran dengan 13 peran (12 bawaan + 1 kustom 'admin_gudang' yang dibuat main agent); (c) Dialog Tambah Peran: nama 'Admin Gudang QA' → kode auto-slug 'admin_gudang_qa', mewarisi Site Engineer, lingkup 'Hanya proyek yang ditugaskan', submit → baris baru muncul dengan badge 'kustom', kolom muncul di matriks dengan admin-permissions-role-custom-badge; (d) /admin/users: dropdown Peran memuat opsi 'admin_gudang_qa'; user qa_gudang@sipro.co.id dibuat, badge peran menampilkan 'Admin Gudang QA'; (e) Login qa_gudang: topbar berlabel 'Admin Gudang QA', sidebar menampilkan menu Proyek + Pembangunan, TIDAK ada Pengguna/Hak Akses, tidak ada error 403 di Beranda; (f) Edit peran menjadi 'Admin Gudang QA2' berhasil; (g) Delete ditolak saat masih dipakai user (toast 'Peran masih dipakai 1 pengguna — pindahkan mereka ke peran lain dulu.'); (h) Setelah reassign user ke site_engineer via user-edit dialog + save, delete peran sukses dan baris hilang. Cleanup peran & user QA otomatis oleh alur uji (peran dihapus di langkah akhir; user qa_gudang tersisa dengan peran site_engineer — lihat action_items).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "RoleFormDialog & user-edit-dialog", "issues": ["Console warning: 'Missing Description or aria-describedby for DialogContent'. Non-blocking, tapi a11y sebaiknya diperbaiki dengan menambahkan DialogDescription atau aria-describedby pada beberapa dialog Radix."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_dynamic_roles.py",
+    "/app/test_reports/pytest/iter7_dynamic_roles.xml"
+  ],
+  "action_items": [
+    "OPSIONAL cleanup: user qa_gudang@sipro.co.id masih ada dengan peran site_engineer setelah reassign — main agent boleh menghapus/menonaktifkan lewat /admin/users jika tidak diperlukan (peran kustom admin_gudang_qa sudah dihapus otomatis oleh test).",
+    "MINOR a11y: tambahkan DialogDescription/aria-describedby pada DialogContent yang belum memilikinya untuk menghilangkan warning Radix."
+  ],
+  "critical_code_review_comments": [
+    "Implementasi peran dinamis sudah rapi: RolesManager memakai data-testid konsisten (rolesRow/Edit/Delete + data-role), RoleFormDialog auto-slug label→code idempoten dan mengikuti pola ^[a-z][a-z0-9_]{2,31}$ yang dinyatakan di pattern input, backend menolak delete jika masih dipakai (409/400) dengan pesan lokal Indonesia yang jelas — user experience solid.",
+    "Toast delete-fail menampilkan pesan yang benar dan baris tetap ada (tidak menghilang optimistik) — perilaku aman.",
+    "Efektivitas RBAC dari peran anak terbukti: user berperan turunan Site Engineer + scope=project langsung memperoleh menu proyek yang benar dan tidak melihat menu Admin — nav_role/role_scope backend + buildNavGroups frontend bekerja sesuai desain."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (5/5)", "frontend": "100% (7/7 skenario UI)"},
+  "test_credentials": "superadmin@sipro.co.id / Sipro#2026 (dari /app/memory/test_credentials.md); qa_gudang@sipro.co.id / Sipro#2026 dibuat saat uji (masih tersisa dengan peran site_engineer).",
+  "seed_data_creation": "Membuat peran kustom 'admin_gudang_qa' (dihapus di akhir uji) dan user qa_gudang@sipro.co.id (masih ada, peran diubah ke site_engineer). Tidak menjalankan seed_reset.sh atau restart backend sesuai instruksi.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Fitur peran dinamis stabil. Test file: /app/backend/tests/test_dynamic_roles.py (5 test). Untuk UI: pola login form pakai input[type=email]/input[type=password]+Enter; shadcn Select klik trigger, tunggu 200-400ms, klik opsi via testid ...-opt-<code>. Testids ADMIN.* di /app/frontend/src/constants/testIds/home.js. User qa_gudang@sipro.co.id masih tersisa (peran site_engineer) — boleh diabaikan atau dibersihkan.",
+  "rca of the issue": "Tidak ada bug ditemukan di fitur peran dinamis pada iterasi ini."
+}

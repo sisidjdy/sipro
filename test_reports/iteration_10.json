@@ -1,0 +1,25 @@
+{
+  "summary": "Iterasi 10 — Verifikasi fix RolePreviewButton (prop label) di AdminUsers.js. Semua 5 skenario review_request HIJAU. (1) /admin/users → user-add-btn → user-form-role=Finance → klik user-form-role-preview: judul admin-role-preview-dialog SEGERA (dibaca <300ms) menampilkan 'Pratinjau menu: Finance' (bukan 'finance'); setelah 3s tetap 'Pratinjau menu: Finance' dan admin-role-preview-item count = 17 (sesuai harapan). (2) Ubah baris site@sipro.co.id → user-edit-role-preview: judul segera 'Pratinjau menu: Site Engineer' (no substring 'site_engineer' pada snippet). Ganti user-edit-role ke Sales → klik lagi: judul 'Pratinjau menu: Sales'. (3) Regresi /admin/permissions: admin-permissions-matrix tampil; klik admin-roles-preview[data-role=admin_gudang] → admin-role-preview-count = '12 menu akan tampil di sidebar · struktur menu mengikuti peran induk Site Engineer.'. (4) Login gudang@sipro.co.id / Sipro#2026 sukses masuk Beranda tanpa error (sidebar peran kustom admin_gudang termuat: Beranda, Master Proyek, Pembangunan, Material & Opname, Site Plan, RAB/BoQ, Subkontraktor & SPK, Pengadaan & Vendor, Kas Bon, Analitik & BI, dll). (5) Backend smoke: GET /api/health → {status:ok}; POST /api/auth/login superadmin & finance & gudang semuanya 200 dgn data user valid. Warning Radix 'Missing Description/aria-describedby' pre-existing, non-blocking.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Radix DialogContent (multiple admin dialogs)", "issues": ["Warning konsol 'Missing Description or aria-describedby={undefined} for {DialogContent}' — pre-existing, aksesibilitas minor."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fix diterapkan tepat: AdminUsers.js baris 66 & 155 meneruskan prop label={labelOf('user_role', form.role) || roleLabel(form.role)} ke RolePreviewButton, dan RoleMenuPreview.js baris 85 menghormati label={label || perms?.roleMeta?.[role]?.label || role}. Alhasil judul dialog tidak lagi menampilkan kode peran mentah selama fetch /admin/permissions berjalan (2-3 detik).",
+    "Tidak ada regresi terlihat pada /admin/permissions atau login peran kustom admin_gudang."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (health + 3 login)", "frontend": "100% (5/5 skenario)"},
+  "test_credentials": "superadmin@sipro.co.id / Sipro#2026; site@sipro.co.id / Sipro#2026; gudang@sipro.co.id / Sipro#2026; finance@sipro.co.id / Sipro#2026",
+  "seed_data_creation": "Tidak ada.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Fix label RolePreviewButton verified end-to-end. Judul dialog tampil label ramah sejak render pertama (immediate <300ms) untuk skenario add-Finance, edit-site_engineer→Site Engineer, edit-Sales. Perms fetch tetap 2-3 detik untuk mengisi item list; count final untuk Finance=17. admin_gudang preview mencantumkan warisan Site Engineer. Login gudang sukses. Radix DialogContent aria-describedby masih pre-existing warning.",
+  "rca of the issue": "N/A — fix sudah efektif."
+}

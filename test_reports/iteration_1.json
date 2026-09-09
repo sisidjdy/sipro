@@ -1,0 +1,30 @@
+{
+  "summary": "Regressed backend pytest suite `test_audit_tahap12_tahapan.py` (6/6 PASS) and exercised the four Phase 29 UI flows against live preview: (1) Pusat Konfigurasi › Tahapan Pembangunan (list/create/delete template), (2) Pusat Konfigurasi › Tahapan Survey (toggle wajib, tambah/hapus poin, simpan), (3) Master Proyek detail sheet › Tambah fase & Terapkan template, (4) Agenda › Survey wizard (stepper 4 tahap, next/prev, disable/enable finalize berbasis poin wajib) — semua PASS. (5) Automasi & Channel › Template WA divalidasi (badge status asli tampil, kolom wa-tmpl-example muncul saat Variabel diisi, simpan body dengan placeholder tak terdaftar memicu toast error dari server). Tidak ada regresi backend/frontend.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Master Proyek › sheet detail proyek", "issues": ["Pada viewport 1920×1080 tombol 'Terapkan template' & 'Tambah fase' di dalam SheetContent kadang berada di tepi kanan viewport sehingga Playwright melaporkan 'Element is outside of the viewport' pada click biasa (di user asli tetap terlihat & terklik; workaround: JS click). Tidak memblokir fungsi."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_audit_tahap12_tahapan.py",
+    "/app/test_reports/pytest/audit_p123.xml"
+  ],
+  "action_items": [
+    "Review request menyebut path '/omnichannel' — rute sebenarnya adalah '/automation'. Pertimbangkan menambahkan alias/redirect atau perbarui dokumentasi/spec."
+  ],
+  "critical_code_review_comments": [
+    "SurveyStagePanel.save() memvalidasi label kosong dengan toast, tetapi flow 'tambah poin baru → langsung Simpan' bisa mengalami race (label input belum ter-commit) — cukup baik untuk pengguna asli namun UX tes E2E mudah gagal. Non-blocking.",
+    "OmnichannelPage: konsumen sub-tab (mis. 'Template WA') dipandu via ?tab=templates; tidak ada endpoint alias '/omnichannel' — mungkin sengaja, tapi review request mengharapkan itu."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "superadmin@sipro.co.id / Sipro#2026 (dari /app/memory/test_credentials.md)",
+  "seed_data_creation": "Membuat proyek uji 'Proyek uji fase' + 4 fase (Fase A–D) + 'Fase Uji UI Zeta' dari sesi UI (kumulatif dari sesi backend pytest). Tidak dibersihkan di sesi ini (spec: 'proyek uji boleh dibiarkan atau dihapus'). Tahapan survey config sudah dikembalikan ke isi semula.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Rute Automasi & Channel adalah /automation (bukan /omnichannel). Test IDs untuk baris agenda = 'agenda-table-row' (bukan 'appts-table-row'); sheet detail agenda = 'appointment-detail'. Baris template WA = 'omni-tmpl-row'. wa-tmpl-example baru muncul setelah kolom 'Variabel (pisahkan koma)' diisi (bukan otomatis dari body). BASE_URL untuk pytest harus di-export via env REACT_APP_BACKEND_URL supaya conftest tidak fallback ke URL lama.",
+  "rca of the issue": "Tidak ada bug utama; hanya deviasi minor pada nama rute (/omnichannel di spec vs /automation di kode)."
+}

@@ -1,0 +1,82 @@
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    command: ["mongod", "--quiet", "--logpath", "/dev/null"]
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  backend:
+    build:
+      context: ..
+      dockerfile: deploy/backend.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      ENV: production
+      MONGO_URL: mongodb://mongo:27017
+      DB_NAME: ${DB_NAME:-sipro}
+      CORS_ORIGINS: https://${DOMAIN}
+      COOKIE_SECURE: "true"
+      JWT_SECRET: ${JWT_SECRET}
+      SEED_DEMO_USERS: ${SEED_DEMO_USERS:-true}
+      SUPERADMIN_EMAIL: ${SUPERADMIN_EMAIL:-superadmin@sipro.co.id}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-Sipro#2026}
+      DEFAULT_ORG_ID: ${DEFAULT_ORG_ID:-org-sipro}
+      DEFAULT_ORG_NAME: ${DEFAULT_ORG_NAME:-SIPRO Developer}
+      PORTAL_MASTER_OTP: ${PORTAL_MASTER_OTP}
+      BACKUP_DIR: /data/backups
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-mongo}
+      EMERGENT_LLM_KEY: ${EMERGENT_LLM_KEY:-}
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
+      WHATSAPP_PHONE_ID: ${WHATSAPP_PHONE_ID:-}
+      META_PIXEL_ID: ${META_PIXEL_ID:-}
+    volumes:
+      - backend_backups:/data/backups
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8001/api/health',timeout=5)"]
+      interval: 15s
+      timeout: 10s
+      retries: 40
+      start_period: 60s
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: deploy/frontend.Dockerfile
+      args:
+        REACT_APP_BACKEND_URL: https://${DOMAIN}
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  mongo_data:
+  backend_backups:
+  caddy_data:
+  caddy_config:

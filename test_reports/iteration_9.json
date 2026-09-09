@@ -1,0 +1,33 @@
+{
+  "summary": "Iterasi 9 — Fitur 'Pratinjau Menu Peran' (frontend-only) HIJAU untuk semua 6 skenario review_request. Login superadmin → /admin/permissions: 13 tombol admin-roles-preview terlihat, klik Sales membuka admin-role-preview-dialog dgn judul 'Pratinjau menu: Sales', count='13 menu akan tampil di sidebar.', item memuat Beranda + Pipeline Lead dan TIDAK memuat Pengguna/Hak Akses/Buku Besar & Jurnal. Escape menutup dialog. Klik pratinjau admin_gudang → count='12 menu akan tampil di sidebar · struktur menu mengikuti peran induk Site Engineer.', item memuat Master Proyek + Pembangunan. VALIDASI KESESUAIAN: login gudang@sipro.co.id → 12 label sidebar SAMA PERSIS (himpunan) dengan 12 item pratinjau admin_gudang (Analitik & BI, Beranda, Kas Bon, Master Proyek, Material & Opname, Notifikasi, Pembangunan, Pengadaan & Vendor, RAB / BoQ, Site Plan, Subkontraktor & SPK, Tugas & Papan Divisi) — 0 missing, 0 extra. Dialog Tambah Peran: admin-role-form-preview tampil sebagai <details>; tanpa peran induk teks menyebut 'Hanya Beranda, Notifikasi, dan menu yang izinnya dicentang kemudian.'; pilih inherits=Finance → 17 item memuat 'Kas Bon' dan 'AR / AP / Komisi'; ganti ke Sales → 13 item memuat 'Pipeline Lead'. /admin/users → dialog Tambah Pengguna: tombol user-form-role-preview ada, pilih peran Finance → klik ikon mata → admin-role-preview-dialog terbuka dgn 17 item, judul akhir 'Pratinjau menu: Finance' (setelah izin dimuat ~2-3 detik). Dialog Ubah Pengguna: user-edit-role-preview ada dan dialog membuka daftar item untuk peran user tsb (site_engineer). Regresi: admin-permissions-matrix tetap tampil, tidak ada warning React key/controlled — hanya warning aksesibilitas Radix 'Missing Description/aria-describedby' pada DialogContent (pre-existing, non-blocking).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "AdminUsers.js RolePreviewButton", "issues": [
+        "Tombol RolePreviewButton di user-form-role-preview & user-edit-role-preview tidak menerima prop 'label' (AdminUsers.js:65,154). Akibatnya, sebelum GET /api/admin/permissions selesai (~2-3 detik), judul dialog tampil sebagai KODE peran mentah, mis. 'Pratinjau menu: finance' / 'Pratinjau menu: site_engineer' — bukan label ramah. Setelah perms termuat, judul auto-resolve via roleMeta[role].label ke 'Finance'/'Site Engineer'. Non-blocking, tapi glitch label singkat terlihat. Saran: teruskan label peran ke <RolePreviewButton label={roleMeta[form.role]?.label ?? form.role} />, atau pre-fetch perms di parent.",
+        "Radix DialogContent warning: 'Missing Description or aria-describedby={undefined} for {DialogContent}' muncul dari beberapa dialog admin/users (pre-existing, bukan regresi fitur ini)."
+      ]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "OPSIONAL (UX minor): Pass prop 'label' pada RolePreviewButton di /app/frontend/src/pages/AdminUsers.js:65 & :154 agar judul dialog pratinjau tidak sempat menampilkan kode peran mentah saat izin sedang dimuat."
+  ],
+  "critical_code_review_comments": [
+    "RoleMenuPreview.js: implementasi rapi — canFor mereplikasi logika AuthContext.can (fullAccess + manage/all/action + view aliases). navRoleOf memakai roleMeta.inherits untuk peran kustom → buildNavGroups dijalankan dgn peran induk sehingga struktur menu identik dgn sidebar user peran itu. Terbukti oleh EXACT MATCH admin_gudang preview vs sidebar gudang@sipro.co.id.",
+    "useRolePerms mem-fetch /api/admin/permissions tiap kali RoleMenuPreviewDialog mount. Di layar /admin/users, klik banyak tombol pratinjau berturut-turut akan trigger multiple fetch (2 request terlihat saat memilih Finance lalu klik ikon karena inline preview + dialog). Saran opsional: hoist useRolePerms ke context/parent AdminUsers untuk mengurangi request berulang.",
+    "RolePreviewButton disabled bila role kosong → mencegah state error, bagus. Tetapi tidak menerima 'label' di AdminUsers.js sehingga judul dialog sempat tampil kode mentah selama loading (lihat design_issues).",
+    "buildNavGroups sebagai single source of truth antara Sidebar dan pratinjau — verifikasi lapangan (gudang user 12 label ≡ admin_gudang preview 12 item) mengkonfirmasi tidak ada drift.",
+    "Regresi matriks /admin/permissions: admin-permissions-matrix tetap render, tidak ada warning React key/controlled baru yang terlihat di konsol."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend-only)", "frontend": "100% (6/6 skenario)"},
+  "test_credentials": "superadmin@sipro.co.id / Sipro#2026; gudang@sipro.co.id / Sipro#2026",
+  "seed_data_creation": "Tidak ada. Tidak membuat/menghapus peran/user selama pengujian.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Fitur Pratinjau Menu Peran verifikasi penuh: (1) daftar peran /admin/permissions → tombol admin-roles-preview per baris; (2) admin_gudang preview count text memuat frasa 'struktur menu mengikuti peran induk Site Engineer'; (3) EXACT MATCH himpunan label sidebar user gudang vs item preview admin_gudang; (4) Add Role dialog preview reaktif thd Select inherits (Finance→17 item, Sales→13 item); (5) AdminUsers add/edit preview OK — perms load 2-3 detik → gunakan wait_for_timeout ≥3000ms. Perhatikan warning Radix 'Missing Description/aria-describedby' bersifat pre-existing. Prop label belum diteruskan di RolePreviewButton dari AdminUsers.js.",
+  "rca of the issue": "N/A — tidak ada bug fungsional pada fitur baru. Satu-satunya diskrepansi kecil (judul dialog menampilkan kode mentah selama perms sedang dimuat) berakar pada AdminUsers.js tidak meneruskan prop 'label' ke RolePreviewButton. Mitigasi: teruskan label peran ke prop 'label' berdasarkan roleMeta atau daftar peran yang sudah tersedia di state form."
+}

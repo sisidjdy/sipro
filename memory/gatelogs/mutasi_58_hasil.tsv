@@ -1,0 +1,34 @@
+M01	TERTANGKAP	M01 toleransi termin HILANG saat skema diterjemahkan menjadi tagihan	K1: K1
+M02	TERTANGKAP	M02 tenggang termin diabaikan (hanya angka bawaan yang dipakai)	K2: K2
+M03	TERTANGKAP	M03 kebijakan denda kembali menjadi angka mati di kode	K3: K3
+M04	TERTANGKAP	M04 batas atas & minimum denda dibuang (tagihan tanpa kewajaran)	K4: K4
+M05	TERTANGKAP	M05 denda sebulan penuh sejak H+1 (bukan prorata sesudah tenggang)	K4b: K4b
+M06	TERTANGKAP	M06 keadaan DALAM TOLERANSI dihapus (lewat tanggal = langsung menunggak)	K5: K5,D2,D2b,D3c,D10
+M07	TERTANGKAP	M07 hari denda dihitung sejak jatuh tempo (tenggang tidak mengurangi apa pun)	K5b: K5b,D3,D3b,D5,D5b,D5c
+M08	TERTANGKAP	M08 label keadaan diketik mesin sendiri (SSOT bercabang)	K5c: K5c
+M09	TERTANGKAP	M09 denda ditagihkan TANPA jurnal (angka di layar, bukan uang di buku)	K6: K6,K6b,D5,D5b,D5c,D6
+M10	TERTANGKAP	M10 idempotensi jurnal denda dimatikan (klik dua kali = denda dua kali)	K6b: K6b,D5b,D6b
+M11	TERTANGKAP	M11 yang ditagihkan bukan SELISIH, tetapi denda penuh setiap kali	K6c (lewat jalan lain): D6,D9
+M12	TERTANGKAP	M12 keringanan boleh diberikan siapa pun tanpa alasan	K7: K7
+M13	TERTANGKAP	M13 keringanan TIDAK membalik jurnal (pendapatan denda tetap berdiri)	K7b: K7b,D8b
+M14	TERTANGKAP	M14 denda yang SUDAH DIBAYAR bisa 'diringankan' (uang pembeli lenyap)	K7c: K7c
+M15	TERTANGKAP	M15 keringanan bisa dianulir bawahan (denda sama ditagihkan ulang)	K8: K8,D9
+M16	TERTANGKAP	M16 sebab penolakan tidak terdaftar di Kamus Data	K9: K9
+M17	TERTANGKAP	M17 akun pendapatan denda dihapus dari CoA (menumpang lain-lain)	K10: K10
+M18	LOLOS	M18 yang menagihkan denda boleh meringankannya sendiri (RBAC)	
+M19	TERTANGKAP	M19 endpoint keringanan memakai izin penagihan (pemisahan tugas hilang)	K12: K12,D7
+M20	TERTANGKAP	M20 sales lintas lingkup bisa membaca transaksi orang lain	K12b (lewat jalan lain): D4
+M21	TERTANGKAP	M21 tombol 'Denda' lama menghitung & menagih sendiri lagi (rumus kedua)	K13: K13
+M22	TERTANGKAP	M22 rumus denda dikloning di modul laporan	K13b: K13b
+M23	TERTANGKAP	M23 daftar penagihan mencampur tenggang dengan tunggakan	K13c: K13c,D10
+M24	TERTANGKAP	M24 nomor akun GL bocor ke mata pembeli di portal	K14b: K14b
+M25	TERTANGKAP	M25 layar kembali mengaku toleransi keterlambatan 'belum dibangun'	K20: K20
+M26	TERTANGKAP	M26 layar menghitung tenggang sendiri di peramban (bukan dari server)	K20b: K20b
+M27	TERTANGKAP	M27 panel denda menjadi komponen MATI (tidak pernah dirender)	K20d: K20d
+M28	TERTANGKAP	M28 sebab denda belum bisa ditagihkan tidak disebutkan (tombol diam)	K21b: K21b,K23
+M29	TERTANGKAP	M29 keringanan bisa dikirim tanpa alasan dari layar	K21d: K21d
+M30	LOLOS	M30 portal pembeli tidak lagi menampilkan toleransi & dendanya	
+M31	TERTANGKAP	M31 testId Fase 58 menjadi MATI (terdaftar tetapi tidak dipakai layar)	K23: K23
+M18	TERTANGKAP	M18 yang menagihkan denda boleh meringankannya sendiri (RBAC)	K11: K11
+M20	TERTANGKAP	M20 sales lintas lingkup bisa membaca transaksi orang lain	K12b: K12b,D4
+M30	TERTANGKAP	M30 portal pembeli tidak lagi menampilkan toleransi & dendanya	K22: K22

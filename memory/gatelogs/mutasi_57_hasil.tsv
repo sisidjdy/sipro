@@ -1,0 +1,33 @@
+M22	TERTANGKAP	M22 tab 'Skema Pembayaran' dicabut dari Pusat Konfigurasi	K13: K13
+M23	TERTANGKAP	M23 skema yang dipakai kontrak disembunyikan dari layar	K13b: K13b
+M24	TERTANGKAP	M24 pilihan editor diketik layar (bukan dari Kamus Data)	K15: K15
+M25	TERTANGKAP	M25 tombol simpan tetap hidup walau pratinjau menyebut penolakan	K16b: K16b
+M26	LOLOS	M26 termin yang masih diisi dilaporkan sebagai galat teknis	
+M27	TERTANGKAP	M27 layar tidak lagi mengaku memakai termin BAWAAN sistem	K17: K17
+M28	TERTANGKAP	M28 sebab skema tidak bisa diganti disembunyikan (tombol diam)	K17b: K17b
+M26	TERTANGKAP	M26 termin yang masih diisi dilaporkan sebagai galat teknis	K16d: K16d
+M01	TERTANGKAP	M01 pratinjau menghitung sendiri (bukan mesin termin yang menagih)	K1: K1,D4,D4c
+M02	TERTANGKAP	M02 dasar 'sisa harga' tidak menutup selisih	K2: K2,D4
+M03	TERTANGKAP	M03 tanggal cicilan bulanan diabaikan (kembali ke hitung hari)	K3: K3,D4c
+M04	TERTANGKAP	M04 skema yang persennya bukan 100% diterima	K4: K4,D2
+M05	LOLOS	M05 termin 'sisa harga' boleh di mana saja & berganda	
+M06	TERTANGKAP	M06 campuran nominal tanpa termin 'sisa harga' diterima	K4c (lewat jalan lain): D2b
+M07	LOLOS	M07 termin bernilai nol diterima (tagihan yang tidak menagih)	
+M08	TERTANGKAP	M08 sebab penolakan tidak terdaftar di Kamus Data	K5: K4b,K5
+M05	TERTANGKAP	M05 dua termin 'sisa harga' diterima (yang kedua selalu Rp 0)	D2e: D2e
+M07	TERTANGKAP	M07 termin bernilai nol diterima (tagihan yang tidak menagih)	D2f: D2f
+M09	TERTANGKAP	M09 kalimat jatuh tempo peristiwa berpura-pura tanggal pasti	K6: K6,D4b
+M10	TERTANGKAP	M10 termin tidak lagi membawa kalimat aturan dari mesin	K6b: K6b,D1c,D3b,D4b
+M11	TERTANGKAP	M11 skema bawaan MENIMPA suntingan pemakai saat kontrak diaktifkan	K7 (lewat jalan lain): 
+M12	TERTANGKAP	M12 kontrak berhenti membaca skema tersimpan (kembali ke termin dalam kode)	K7b (lewat jalan lain): D7b,D7c
+M13	TERTANGKAP	M13 tidak ada skema cocok dijawab termin karangan tanpa sebab	-: 
+M14	LOLOS	M14 skema yang dipakai kontrak beruang bisa diubah diam-diam	
+M15	TERTANGKAP	M15 jenis skema tidak diperiksa (akad kredit muncul di kontrak tunai)	K9: K9,D8
+M16	LOLOS	M16 skema di luar proyek kontrak diterima	
+M17	TERTANGKAP	M17 kontrak yang sudah dibayar boleh ganti skema (jadwal ditulis ulang)	K9c: K9c,D9
+M18	TERTANGKAP	M18 menetapkan skema pada kontrak memakai izin yang sama dengan menyusunnya	K10: K10
+M19	TERTANGKAP	M19 penggantian skema kontrak tanpa alasan	K10b: K10b,D7d
+M20	TERTANGKAP	M20 tanggal jatuh tempo 31 diterima (Februari membuat tagihan meleset)	K11: K11,D2d
+M21	TERTANGKAP	M21 sisa pembulatan cicilan hilang (jumlah persen tidak tepat)	K12: K12
+M14	TERTANGKAP	M14 skema yang dipakai kontrak beruang bisa diubah diam-diam	D9b: D9b
+M16	TERTANGKAP	M16 skema di luar proyek kontrak diterima	D7e: D7e
